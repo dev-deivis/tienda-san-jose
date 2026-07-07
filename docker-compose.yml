@@ -1,0 +1,15 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: tienda-san-jose-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: devpassword123
+      MYSQL_DATABASE: tienda_san_jose
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  orders    Order[]
+}
+
+enum Role {
+  CUSTOMER
+  STAFF
+  ADMIN
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  nombre      String
+  slug        String    @unique
+  descripcion String?
+  imagen      String?
+  products    Product[]
+}
+
+model Product {
+  id          Int         @id @default(autoincrement())
+  nombre      String
+  descripcion String?     @db.Text
+  precio      Decimal     @db.Decimal(10, 2)
+  stock       Int         @default(0)
+  imagen      String?
+  attributes  Json?
+  categoryId  Int
+  category    Category    @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime    @default(now())
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  userId          Int
+  user            User        @relation(fields: [userId], references: [id])
+  status          String      @default("pending")
+  total           Decimal     @db.Decimal(10, 2)
+  shippingAddress String      @db.Text
+  createdAt       DateTime    @default(now())
+  items           OrderItem[]
+}
+
+model OrderItem {
+  id             Int     @id @default(autoincrement())
+  orderId        Int
+  order          Order   @relation(fields: [orderId], references: [id])
+  productId      Int
+  product        Product @relation(fields: [productId], references: [id])
+  cantidad       Int
+  precioUnitario Decimal @db.Decimal(10, 2)
+}
