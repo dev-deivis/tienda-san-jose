@@ -1,3 +1,4 @@
-export default function ProductoPage({ params }: { params: { id: string } }) {
-  return <div>Producto: {params.id} — próximamente</div>;
+export default async function ProductoPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <div>Producto: {id} — próximamente</div>;
 }

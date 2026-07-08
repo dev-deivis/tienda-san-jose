@@ -1,3 +1,4 @@
-export default function CategoriaPage({ params }: { params: { slug: string } }) {
-  return <div>Categoría: {params.slug} — próximamente</div>;
+export default async function CategoriaPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  return <div>Categoría: {slug} — próximamente</div>;
 }
