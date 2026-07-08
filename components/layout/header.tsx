@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { ShoppingCart, User, Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import { useCart } from '@/context/cart-context';
 
 type Category = { id: number; nombre: string; slug: string };
 
 export function Header({ categories }: { categories: Category[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { getItemCount } = useCart();
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
@@ -46,10 +48,15 @@ export function Header({ categories }: { categories: Category[] }) {
           <div className="flex items-center gap-3">
             <Link
               href="/carrito"
-              className="p-2 text-gray-600 hover:text-brand-purple transition-colors"
+              className="relative p-2 text-gray-600 hover:text-brand-purple transition-colors"
               aria-label="Carrito de compras"
             >
               <ShoppingCart size={20} />
+              {getItemCount() > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-brand-magenta text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {getItemCount() > 99 ? '99+' : getItemCount()}
+                </span>
+              )}
             </Link>
             <Link
               href="/cuenta"

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ShoppingCart, MapPin, Check } from 'lucide-react';
+import { useCart } from '@/context/cart-context';
 
 type Props = {
   product: {
@@ -17,18 +18,27 @@ type Props = {
 export function ProductPurchasePanel({ product }: Props) {
   const [cantidad, setCantidad] = useState(1);
   const [added, setAdded] = useState(false);
+  const { addItem } = useCart();
+
+  const attrs = product.attributes ?? {};
 
   function handleAdd() {
-    // TODO: conectar con el carrito real
+    addItem(
+      {
+        productId: product.id,
+        nombre: product.nombre,
+        precio: product.precio,
+        imagen: `https://picsum.photos/seed/product-${product.id}/400/400`,
+        variante: Object.values(attrs).join(' / ') || undefined,
+      },
+      cantidad
+    );
     setAdded(true);
     setTimeout(() => setAdded(false), 2500);
   }
 
-  const attrs = product.attributes ?? {};
-
   return (
     <div className="flex flex-col gap-6">
-      {/* Nombre y precio */}
       <div>
         <h1 className="font-serif text-3xl font-bold text-gray-900 leading-tight">
           {product.nombre}
@@ -38,14 +48,12 @@ export function ProductPurchasePanel({ product }: Props) {
         </p>
       </div>
 
-      {/* Descripción corta */}
       {product.descripcion && (
         <p className="text-gray-500 text-sm leading-relaxed line-clamp-3">
           {product.descripcion}
         </p>
       )}
 
-      {/* Atributos */}
       {Object.entries(attrs).length > 0 && (
         <div className="flex flex-col gap-3">
           {Object.entries(attrs).map(([key, val]) => {
@@ -68,7 +76,6 @@ export function ProductPurchasePanel({ product }: Props) {
         </div>
       )}
 
-      {/* Selector de cantidad */}
       <div>
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
           Cantidad
@@ -91,7 +98,6 @@ export function ProductPurchasePanel({ product }: Props) {
         </div>
       </div>
 
-      {/* Botón agregar */}
       <button
         onClick={handleAdd}
         className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-semibold text-base transition-all duration-300 ${
@@ -107,7 +113,6 @@ export function ProductPurchasePanel({ product }: Props) {
         )}
       </button>
 
-      {/* Envío */}
       <p className="flex items-center gap-1.5 text-xs text-gray-400">
         <MapPin size={13} className="text-brand-gold" />
         Envíos desde Bonita Springs, FL
