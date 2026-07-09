@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -444,6 +445,32 @@ async function main() {
 
   const totalProductos = await prisma.product.count();
   const totalCategorias = await prisma.category.count();
+
+  // ─────────────────────────────────────────────
+  // USUARIO ADMIN INICIAL
+  // ─────────────────────────────────────────────
+  console.log("\n👤 Verificando usuario admin...");
+  const ADMIN_EMAIL = "admin@tiendasanjose.com";
+  const ADMIN_PASSWORD = "Admin123!";
+
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: ADMIN_EMAIL },
+  });
+
+  if (!existingAdmin) {
+    const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 12);
+    await prisma.user.create({
+      data: {
+        email: ADMIN_EMAIL,
+        password: hashedPassword,
+        nombre: "Administrador",
+        role: "ADMIN",
+      },
+    });
+    console.log(`  ✅ Usuario admin creado: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
+  } else {
+    console.log(`  ⏭️  Usuario admin ya existe: ${ADMIN_EMAIL}`);
+  }
 
   console.log(`\n🎉 Seed completado:`);
   console.log(`   • ${totalCategorias} categorías`);
