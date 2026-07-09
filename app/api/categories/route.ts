@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
-// TODO: implementar lógica de categorías
 export async function GET() {
-  return NextResponse.json({ message: "próximamente" });
-}
-
-export async function POST() {
-  return NextResponse.json({ message: "próximamente" });
+  const categories = await prisma.category.findMany({
+    select: { id: true, nombre: true, slug: true },
+    orderBy: { nombre: 'asc' },
+  });
+  return NextResponse.json(categories);
 }
