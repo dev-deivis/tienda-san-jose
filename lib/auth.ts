@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { cookies } from 'next/headers';
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 const JWT_EXPIRES_IN = '7d';
@@ -31,4 +32,12 @@ export function verifyToken(
   } catch {
     return null;
   }
+}
+
+/** Lee la cookie de sesión del request actual y retorna el payload del JWT. */
+export async function getSessionUser(): Promise<{ userId: number; role: string } | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('session')?.value;
+  if (!token) return null;
+  return verifyToken(token);
 }

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ShoppingCart, User, Menu, X, LogOut, UserCircle } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useCart } from '@/context/cart-context';
-import { useCurrentUser } from '@/hooks/use-current-user';
+import { useAuth } from '@/context/auth-context';
 
 type Category = { id: number; nombre: string; slug: string };
 
@@ -13,7 +13,7 @@ export function Header({ categories }: { categories: Category[] }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { getItemCount } = useCart();
-  const { user, logout } = useCurrentUser();
+  const { user, logout } = useAuth();
 
   // Cerrar dropdown al hacer click fuera
   useEffect(() => {

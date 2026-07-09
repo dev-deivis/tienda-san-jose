@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth, type CurrentUser } from '@/context/auth-context';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setUser } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,12 +33,13 @@ export default function LoginPage() {
         return;
       }
 
+      // Actualizar AuthContext inmediatamente → dispara la fusión del carrito
+      setUser(data.user as CurrentUser);
+
       const role: string = data.user?.role ?? 'CUSTOMER';
       if (role === 'ADMIN') router.push('/admin');
       else if (role === 'STAFF') router.push('/staff');
       else router.push('/');
-
-      router.refresh();
     } catch {
       setError('Error de conexión. Intenta de nuevo.');
     } finally {

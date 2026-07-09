@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth, type CurrentUser } from '@/context/auth-context';
 
 export default function RegistroPage() {
   const router = useRouter();
+  const { setUser } = useAuth();
 
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
@@ -44,9 +46,11 @@ export default function RegistroPage() {
         return;
       }
 
+      // Actualizar AuthContext inmediatamente → dispara la fusión del carrito
+      setUser(data.user as CurrentUser);
+
       // Registro siempre crea CUSTOMER → redirige a home
       router.push('/');
-      router.refresh();
     } catch {
       setError('Error de conexión. Intenta de nuevo.');
     } finally {

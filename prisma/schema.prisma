@@ -11,13 +11,14 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
+  id        Int        @id @default(autoincrement())
+  email     String     @unique
   password  String
   nombre    String?
-  role      Role     @default(CUSTOMER)
-  createdAt DateTime @default(now())
+  role      Role       @default(CUSTOMER)
+  createdAt DateTime   @default(now())
   orders    Order[]
+  cartItems CartItem[]
 }
 
 enum Role {
@@ -47,6 +48,18 @@ model Product {
   category    Category    @relation(fields: [categoryId], references: [id])
   createdAt   DateTime    @default(now())
   orderItems  OrderItem[]
+  cartItems   CartItem[]
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  cantidad  Int
+  variante  Json?
+  createdAt DateTime @default(now())
 }
 
 model Order {
