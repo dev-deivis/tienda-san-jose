@@ -47,6 +47,10 @@ model Product {
   categoryId  Int
   category    Category    @relation(fields: [categoryId], references: [id])
   createdAt   DateTime    @default(now())
+  pesoLb      Float?      @default(0.5)
+  largoIn     Float?      @default(6)
+  anchoIn     Float?      @default(6)
+  altoIn      Float?      @default(2)
   orderItems  OrderItem[]
   cartItems   CartItem[]
 }
@@ -69,6 +73,8 @@ model Order {
   status          String      @default("pending")
   total           Decimal     @db.Decimal(10, 2)
   shippingAddress String      @db.Text
+  shippingCost    Decimal     @db.Decimal(10, 2) @default(0)
+  shippingMethod  String?
   createdAt       DateTime    @default(now())
   items           OrderItem[]
 }

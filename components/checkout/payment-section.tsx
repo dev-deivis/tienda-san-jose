@@ -83,14 +83,31 @@ function PaymentForm({
 // ---------------------------------------------------------------------------
 // Componente principal exportado
 // ---------------------------------------------------------------------------
-export function PaymentSection({ shippingData }: { shippingData: ShippingFormData }) {
+export function PaymentSection({
+  shippingData,
+  shippingCost,
+  shippingMethod,
+}: {
+  shippingData: ShippingFormData;
+  shippingCost: number;
+  shippingMethod: string;
+}) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUnauth, setIsUnauth] = useState(false);
 
   useEffect(() => {
-    fetch('/api/checkout/create-payment-intent', { method: 'POST' })
+    setClientSecret(null);
+    setLoading(true);
+    setError(null);
+    setIsUnauth(false);
+
+    fetch('/api/checkout/create-payment-intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shippingCost, shippingMethod }),
+    })
       .then(async (r) => {
         if (r.status === 401) {
           setIsUnauth(true);
@@ -109,7 +126,7 @@ export function PaymentSection({ shippingData }: { shippingData: ShippingFormDat
         setError('Error de conexion al inicializar el pago.');
         setLoading(false);
       });
-  }, []);
+  }, [shippingCost, shippingMethod]);
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm">

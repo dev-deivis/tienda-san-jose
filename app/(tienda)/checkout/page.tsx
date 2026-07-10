@@ -23,6 +23,26 @@ const INITIAL_FORM: ShippingFormData = {
   codigoPostal: '',
 };
 
+type ShippingRate = {
+  id: string;
+  proveedor: string;
+  servicio: string;
+  precio: number;
+  diasEstimados: number | null;
+};
+
+function validateShipping(data: ShippingFormData): ShippingFormErrors {
+  const errs: ShippingFormErrors = {};
+  if (!data.nombre.trim()) errs.nombre = 'Requerido';
+  if (!data.apellido.trim()) errs.apellido = 'Requerido';
+  if (!data.email.trim()) errs.email = 'Requerido';
+  if (!data.direccion1.trim()) errs.direccion1 = 'Requerido';
+  if (!data.ciudad.trim()) errs.ciudad = 'Requerido';
+  if (!data.estado.trim()) errs.estado = 'Requerido';
+  if (!data.codigoPostal.trim()) errs.codigoPostal = 'Requerido';
+  return errs;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, getTotal } = useCart();
@@ -30,6 +50,13 @@ export default function CheckoutPage() {
   const [hydrated, setHydrated] = useState(false);
   const [formData, setFormData] = useState<ShippingFormData>(INITIAL_FORM);
   const [errors, setErrors] = useState<ShippingFormErrors>({});
+
+  // Estado para tarifas de envío
+  const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
+  const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null);
+  const [loadingRates, setLoadingRates] = useState(false);
+  const [ratesError, setRatesError] = useState<string | null>(null);
+  const [shippingFetched, setShippingFetched] = useState(false);
 
   // Esperar hidratacion del carrito antes de redirigir
   useEffect(() => {
@@ -47,6 +74,42 @@ export default function CheckoutPage() {
     // Limpiar error del campo al editar
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+    // Si el usuario edita campos de dirección, resetear tarifas calculadas
+    if (['direccion1', 'ciudad', 'estado', 'codigoPostal'].includes(field)) {
+      setShippingFetched(false);
+      setShippingRates([]);
+      setSelectedRate(null);
+    }
+  }
+
+  async function cotizarEnvio() {
+    const newErrors = validateShipping(formData);
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    setLoadingRates(true);
+    setRatesError(null);
+    setSelectedRate(null);
+    try {
+      const res = await fetch('/api/shipping/rates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          direccion1: formData.direccion1,
+          ciudad: formData.ciudad,
+          estado: formData.estado,
+          codigoPostal: formData.codigoPostal,
+        }),
+      });
+      const data = await res.json();
+      setShippingRates(data);
+      setShippingFetched(true);
+    } catch {
+      setRatesError('No se pudieron obtener tarifas de envío.');
+    } finally {
+      setLoadingRates(false);
     }
   }
 
@@ -89,7 +152,84 @@ export default function CheckoutPage() {
               errors={errors}
               onChange={handleChange}
             />
-            <PaymentSection shippingData={formData} />
+
+            {/* Sección de opciones de envío */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h2 className="font-serif text-xl font-bold text-gray-900 mb-4">
+                Método de envío
+              </h2>
+
+              {!shippingFetched && (
+                <button
+                  onClick={cotizarEnvio}
+                  disabled={loadingRates}
+                  className="w-full py-3 border-2 border-brand-purple text-brand-purple rounded-xl font-semibold hover:bg-brand-purple hover:text-white transition-colors disabled:opacity-50"
+                >
+                  {loadingRates ? 'Calculando...' : 'Calcular opciones de envío'}
+                </button>
+              )}
+
+              {ratesError && (
+                <p className="text-red-600 text-sm">{ratesError}</p>
+              )}
+
+              {shippingFetched && shippingRates.length > 0 && (
+                <div className="space-y-2">
+                  {shippingRates.map((rate) => (
+                    <label
+                      key={rate.id}
+                      className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${
+                        selectedRate?.id === rate.id
+                          ? 'border-brand-purple bg-brand-purple/5'
+                          : 'border-gray-200 hover:border-brand-purple/40'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="shipping-rate"
+                        value={rate.id}
+                        checked={selectedRate?.id === rate.id}
+                        onChange={() => setSelectedRate(rate)}
+                        className="text-brand-purple"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-800">
+                          {rate.proveedor} — {rate.servicio}
+                        </p>
+                        {rate.diasEstimados !== null && (
+                          <p className="text-xs text-gray-500">
+                            {rate.diasEstimados} días hábiles estimados
+                          </p>
+                        )}
+                      </div>
+                      <p className="text-sm font-bold text-gray-900">
+                        ${rate.precio.toFixed(2)}
+                      </p>
+                    </label>
+                  ))}
+
+                  <button
+                    onClick={() => {
+                      setShippingFetched(false);
+                      setShippingRates([]);
+                      setSelectedRate(null);
+                    }}
+                    className="text-xs text-gray-400 hover:text-brand-purple transition-colors mt-1"
+                  >
+                    Cambiar dirección
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Sección de pago — solo cuando hay un método de envío seleccionado */}
+            {selectedRate && (
+              <PaymentSection
+                shippingData={formData}
+                shippingCost={selectedRate.precio}
+                shippingMethod={`${selectedRate.proveedor} — ${selectedRate.servicio}`}
+              />
+            )}
           </div>
 
           {/* Columna derecha — resumen sticky */}
@@ -136,19 +276,27 @@ export default function CheckoutPage() {
                   <span className="font-semibold">${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Envio</span>
-                  <span className="text-gray-400 italic text-xs text-right">
-                    $0.00 (se calculara con Shippo/EasyPost)
-                  </span>
+                  <span className="text-gray-500">Envío</span>
+                  {selectedRate ? (
+                    <span className="font-semibold">
+                      ${selectedRate.precio.toFixed(2)}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400 text-xs italic">
+                      Selecciona método
+                    </span>
+                  )}
                 </div>
                 <div className="border-t border-gray-100 pt-3 flex justify-between text-base font-bold">
                   <span>Total</span>
-                  <span className="text-brand-purple">${subtotal.toFixed(2)}</span>
+                  <span className="text-brand-purple">
+                    ${(subtotal + (selectedRate?.precio ?? 0)).toFixed(2)}
+                  </span>
                 </div>
               </div>
 
               <p className="text-xs text-gray-400 text-center leading-relaxed">
-                Completa los datos de envio y usa el formulario de pago para confirmar tu pedido.
+                Completa los datos de envío, selecciona un método y confirma tu pedido.
               </p>
 
               <Link

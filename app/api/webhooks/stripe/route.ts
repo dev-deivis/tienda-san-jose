@@ -38,6 +38,9 @@ export async function POST(req: NextRequest) {
     const items: Array<{ productId: number; cantidad: number; precio: number }> =
       JSON.parse(itemsRaw);
 
+    const shippingCost = parseFloat(pi.metadata.shippingCost ?? '0');
+    const shippingMethod = pi.metadata.shippingMethod ?? null;
+
     // Idempotencia: verificar si ya existe un Order para este PaymentIntent
     const existing = await prisma.order.findFirst({
       where: { shippingAddress: { contains: pi.id } },
@@ -46,13 +49,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    const total = items.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
+    const subtotal = items.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
+    const total = subtotal + shippingCost;
 
     const order = await prisma.order.create({
       data: {
         userId,
         status: 'processing',
         total,
+        shippingCost,
+        shippingMethod,
         shippingAddress: JSON.stringify({ paymentIntentId: pi.id }),
         items: {
           create: items.map((i) => ({
