@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useCart } from '@/context/cart-context';
 import {
   ShippingForm,
-  validateShipping,
   type ShippingFormData,
   type ShippingFormErrors,
 } from '@/components/checkout/shipping-form';
@@ -31,9 +30,8 @@ export default function CheckoutPage() {
   const [hydrated, setHydrated] = useState(false);
   const [formData, setFormData] = useState<ShippingFormData>(INITIAL_FORM);
   const [errors, setErrors] = useState<ShippingFormErrors>({});
-  const [showConfirmation, setShowConfirmation] = useState(false);
 
-  // Esperar hidratación del carrito antes de redirigir
+  // Esperar hidratacion del carrito antes de redirigir
   useEffect(() => {
     setHydrated(true);
   }, []);
@@ -52,18 +50,6 @@ export default function CheckoutPage() {
     }
   }
 
-  function handleRealizarPedido() {
-    const newErrors = validateShipping(formData);
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      // Scroll al primer error
-      const firstErrorField = document.querySelector('[data-has-error]');
-      firstErrorField?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
-    setShowConfirmation(true);
-  }
-
   const subtotal = getTotal();
 
   // Estado de carga mientras se hidrata el carrito
@@ -75,7 +61,7 @@ export default function CheckoutPage() {
     );
   }
 
-  // No renderizar nada si el carrito está vacío (la redirección está en el useEffect)
+  // No renderizar nada si el carrito esta vacio (la redireccion esta en el useEffect)
   if (items.length === 0) return null;
 
   return (
@@ -103,7 +89,7 @@ export default function CheckoutPage() {
               errors={errors}
               onChange={handleChange}
             />
-            <PaymentSection />
+            <PaymentSection shippingData={formData} />
           </div>
 
           {/* Columna derecha — resumen sticky */}
@@ -150,9 +136,9 @@ export default function CheckoutPage() {
                   <span className="font-semibold">${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Envío</span>
+                  <span className="text-gray-500">Envio</span>
                   <span className="text-gray-400 italic text-xs text-right">
-                    $0.00 (se calculará con Shippo/EasyPost)
+                    $0.00 (se calculara con Shippo/EasyPost)
                   </span>
                 </div>
                 <div className="border-t border-gray-100 pt-3 flex justify-between text-base font-bold">
@@ -162,56 +148,19 @@ export default function CheckoutPage() {
               </div>
 
               <p className="text-xs text-gray-400 text-center leading-relaxed">
-                Los impuestos se calculan automáticamente con Stripe Tax antes
-                de confirmar el pago
+                Completa los datos de envio y usa el formulario de pago para confirmar tu pedido.
               </p>
-
-              {/* Botón principal */}
-              <button
-                onClick={handleRealizarPedido}
-                className="w-full py-4 bg-brand-purple text-white rounded-2xl font-semibold hover:bg-brand-purple-dark transition-colors shadow-lg"
-              >
-                Realizar Pedido
-              </button>
 
               <Link
                 href="/carrito"
                 className="w-full flex items-center justify-center py-2 text-sm text-brand-purple hover:underline"
               >
-                ← Volver al carrito
+                Volver al carrito
               </Link>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Modal de confirmación (placeholder) */}
-      {showConfirmation && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
-          onClick={() => setShowConfirmation(false)}
-        >
-          <div
-            className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl text-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <span className="text-5xl mb-4 block">🔒</span>
-            <h3 className="font-serif text-xl font-bold text-gray-900 mb-3">
-              Checkout en construcción
-            </h3>
-            <p className="text-gray-500 text-sm leading-relaxed">
-              La integración de pago se completará cuando tengamos las
-              credenciales de Stripe. Tus datos de envío han sido registrados.
-            </p>
-            <button
-              onClick={() => setShowConfirmation(false)}
-              className="mt-6 px-6 py-2.5 bg-brand-purple text-white rounded-full font-medium hover:bg-brand-purple-dark transition-colors"
-            >
-              Entendido
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
