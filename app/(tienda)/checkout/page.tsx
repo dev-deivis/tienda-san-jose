@@ -57,6 +57,8 @@ export default function CheckoutPage() {
   const [loadingRates, setLoadingRates] = useState(false);
   const [ratesError, setRatesError] = useState<string | null>(null);
   const [shippingFetched, setShippingFetched] = useState(false);
+  const [taxAmount, setTaxAmount] = useState<number>(0);
+  const [taxReady, setTaxReady] = useState(false);
 
   // Esperar hidratacion del carrito antes de redirigir
   useEffect(() => {
@@ -80,6 +82,8 @@ export default function CheckoutPage() {
       setShippingFetched(false);
       setShippingRates([]);
       setSelectedRate(null);
+      setTaxAmount(0);
+      setTaxReady(false);
     }
   }
 
@@ -189,7 +193,7 @@ export default function CheckoutPage() {
                         name="shipping-rate"
                         value={rate.id}
                         checked={selectedRate?.id === rate.id}
-                        onChange={() => setSelectedRate(rate)}
+                        onChange={() => { setSelectedRate(rate); setTaxReady(false); setTaxAmount(0); }}
                         className="text-brand-purple"
                       />
                       <div className="flex-1">
@@ -228,6 +232,7 @@ export default function CheckoutPage() {
                 shippingData={formData}
                 shippingCost={selectedRate.precio}
                 shippingMethod={`${selectedRate.proveedor} — ${selectedRate.servicio}`}
+                onTaxCalculated={(amount) => { setTaxAmount(amount); setTaxReady(true); }}
               />
             )}
           </div>
@@ -278,19 +283,27 @@ export default function CheckoutPage() {
                 <div className="flex justify-between">
                   <span className="text-gray-500">Envío</span>
                   {selectedRate ? (
-                    <span className="font-semibold">
-                      ${selectedRate.precio.toFixed(2)}
-                    </span>
+                    <span className="font-semibold">${selectedRate.precio.toFixed(2)}</span>
                   ) : (
-                    <span className="text-gray-400 text-xs italic">
-                      Selecciona método
-                    </span>
+                    <span className="text-gray-400 text-xs italic">Selecciona método</span>
+                  )}
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Impuesto</span>
+                  {!selectedRate ? (
+                    <span className="text-gray-400 text-xs italic">—</span>
+                  ) : !taxReady ? (
+                    <span className="text-gray-400 text-xs italic">Calculando…</span>
+                  ) : taxAmount === 0 ? (
+                    <span className="text-gray-400 text-xs italic">$0.00 (exento)</span>
+                  ) : (
+                    <span className="font-semibold">${taxAmount.toFixed(2)}</span>
                   )}
                 </div>
                 <div className="border-t border-gray-100 pt-3 flex justify-between text-base font-bold">
                   <span>Total</span>
                   <span className="text-brand-purple">
-                    ${(subtotal + (selectedRate?.precio ?? 0)).toFixed(2)}
+                    ${(subtotal + (selectedRate?.precio ?? 0) + taxAmount).toFixed(2)}
                   </span>
                 </div>
               </div>

@@ -40,6 +40,21 @@ export async function POST(req: NextRequest) {
 
     const shippingCost = parseFloat(pi.metadata.shippingCost ?? '0');
     const shippingMethod = pi.metadata.shippingMethod ?? null;
+    const taxAmount = parseFloat(pi.metadata.taxAmount ?? '0');
+    const taxCalculationId = pi.metadata.taxCalculationId || null;
+
+    // Registrar Tax Transaction en Stripe (para reportes de impuestos)
+    if (taxCalculationId) {
+      try {
+        await stripe.tax.transactions.createFromCalculation({
+          calculation: taxCalculationId,
+          reference: pi.id,
+        });
+      } catch (err) {
+        console.error('[stripe-tax] Error creando Tax Transaction:', err);
+        // No bloquear — el Order se crea igual
+      }
+    }
 
     // Idempotencia: verificar si ya existe un Order para este PaymentIntent
     const existing = await prisma.order.findFirst({
@@ -50,7 +65,7 @@ export async function POST(req: NextRequest) {
     }
 
     const subtotal = items.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
-    const total = subtotal + shippingCost;
+    const total = subtotal + shippingCost + taxAmount;
 
     const order = await prisma.order.create({
       data: {
@@ -59,6 +74,7 @@ export async function POST(req: NextRequest) {
         total,
         shippingCost,
         shippingMethod,
+        taxAmount,
         shippingAddress: JSON.stringify({ paymentIntentId: pi.id }),
         items: {
           create: items.map((i) => ({

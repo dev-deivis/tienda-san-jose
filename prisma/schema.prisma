@@ -75,6 +75,7 @@ model Order {
   shippingAddress String      @db.Text
   shippingCost    Decimal     @db.Decimal(10, 2) @default(0)
   shippingMethod  String?
+  taxAmount       Decimal     @db.Decimal(10, 2) @default(0)
   createdAt       DateTime    @default(now())
   items           OrderItem[]
 }

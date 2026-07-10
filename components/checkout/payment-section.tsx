@@ -87,10 +87,12 @@ export function PaymentSection({
   shippingData,
   shippingCost,
   shippingMethod,
+  onTaxCalculated,
 }: {
   shippingData: ShippingFormData;
   shippingCost: number;
   shippingMethod: string;
+  onTaxCalculated: (taxAmount: number) => void;
 }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -106,7 +108,17 @@ export function PaymentSection({
     fetch('/api/checkout/create-payment-intent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ shippingCost, shippingMethod }),
+      body: JSON.stringify({
+        shippingCost,
+        shippingMethod,
+        shippingAddress: {
+          line1: shippingData.direccion1,
+          city: shippingData.ciudad,
+          state: shippingData.estado,
+          postal_code: shippingData.codigoPostal,
+          country: 'US',
+        },
+      }),
     })
       .then(async (r) => {
         if (r.status === 401) {
@@ -117,6 +129,7 @@ export function PaymentSection({
         const data = await r.json();
         if (data.clientSecret) {
           setClientSecret(data.clientSecret);
+          onTaxCalculated(data.taxAmountCents / 100);
         } else {
           setError(data.error ?? 'No se pudo inicializar el pago.');
         }
@@ -126,7 +139,7 @@ export function PaymentSection({
         setError('Error de conexion al inicializar el pago.');
         setLoading(false);
       });
-  }, [shippingCost, shippingMethod]);
+  }, [shippingCost, shippingMethod, shippingData.ciudad, shippingData.estado, shippingData.codigoPostal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm">
@@ -160,6 +173,7 @@ export function PaymentSection({
 
       {clientSecret && (
         <Elements
+          key={clientSecret}
           stripe={getStripe()}
           options={{ clientSecret, appearance: { theme: 'stripe' } }}
         >
