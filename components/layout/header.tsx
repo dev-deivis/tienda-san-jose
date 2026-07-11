@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, User, Menu, X, LogOut, UserCircle } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, LogOut, UserCircle, Package } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useCart } from '@/context/cart-context';
 import { useAuth } from '@/context/auth-context';
@@ -92,6 +92,14 @@ export function Header({ categories }: { categories: Category[] }) {
                         {user.nombre ?? user.email}
                       </p>
                     </div>
+                    <Link
+                      href="/mis-pedidos"
+                      onClick={() => setDropdownOpen(false)}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-brand-purple transition-colors"
+                    >
+                      <Package size={15} />
+                      Mis pedidos
+                    </Link>
                     <button
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-brand-purple transition-colors text-left"
                       onClick={() => { setDropdownOpen(false); }}
