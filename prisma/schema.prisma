@@ -76,6 +76,10 @@ model Order {
   shippingCost    Decimal     @db.Decimal(10, 2) @default(0)
   shippingMethod  String?
   taxAmount       Decimal     @db.Decimal(10, 2) @default(0)
+  shippoRateId    String?
+  trackingNumber  String?
+  trackingUrl     String?  @db.Text
+  labelUrl        String?  @db.Text
   createdAt       DateTime    @default(now())
   items           OrderItem[]
 }

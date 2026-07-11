@@ -232,6 +232,7 @@ export default function CheckoutPage() {
                 shippingData={formData}
                 shippingCost={selectedRate.precio}
                 shippingMethod={`${selectedRate.proveedor} — ${selectedRate.servicio}`}
+                shippoRateId={selectedRate.id}
                 onTaxCalculated={(amount) => { setTaxAmount(amount); setTaxReady(true); }}
               />
             )}

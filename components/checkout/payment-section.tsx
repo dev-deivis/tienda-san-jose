@@ -87,11 +87,13 @@ export function PaymentSection({
   shippingData,
   shippingCost,
   shippingMethod,
+  shippoRateId,
   onTaxCalculated,
 }: {
   shippingData: ShippingFormData;
   shippingCost: number;
   shippingMethod: string;
+  shippoRateId: string;
   onTaxCalculated: (taxAmount: number) => void;
 }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -111,6 +113,7 @@ export function PaymentSection({
       body: JSON.stringify({
         shippingCost,
         shippingMethod,
+        shippoRateId,
         shippingAddress: {
           line1: shippingData.direccion1,
           city: shippingData.ciudad,
@@ -139,7 +142,7 @@ export function PaymentSection({
         setError('Error de conexion al inicializar el pago.');
         setLoading(false);
       });
-  }, [shippingCost, shippingMethod, shippingData.ciudad, shippingData.estado, shippingData.codigoPostal]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [shippingCost, shippingMethod, shippoRateId, shippingData.ciudad, shippingData.estado, shippingData.codigoPostal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Package, Truck } from 'lucide-react';
 
 type OrderUser = { email: string; nombre: string | null };
 type OrderItem = {
@@ -17,6 +17,11 @@ type Order = {
   total: number;
   createdAt: string;
   shippingAddress: string;
+  shippingMethod: string | null;
+  shippoRateId: string | null;
+  trackingNumber: string | null;
+  trackingUrl: string | null;
+  labelUrl: string | null;
   user: OrderUser;
   items: OrderItem[];
 };
@@ -47,6 +52,8 @@ export default function StaffPedidosPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<StatusFilter>('Todos');
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [generatingLabelId, setGeneratingLabelId] = useState<number | null>(null);
+  const [labelError, setLabelError] = useState<{ id: number; msg: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchOrders = useCallback(async () => {
@@ -86,6 +93,36 @@ export default function StaffPedidosPage() {
       }
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const generateLabel = async (orderId: number) => {
+    setGeneratingLabelId(orderId);
+    setLabelError(null);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/generate-label`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === orderId
+              ? {
+                  ...o,
+                  labelUrl: data.labelUrl,
+                  trackingNumber: data.trackingNumber,
+                  trackingUrl: data.trackingUrl,
+                  status: 'shipped',
+                }
+              : o
+          )
+        );
+      } else {
+        setLabelError({ id: orderId, msg: data.error ?? 'Error al generar la etiqueta.' });
+      }
+    } catch {
+      setLabelError({ id: orderId, msg: 'Error de conexión al generar la etiqueta.' });
+    } finally {
+      setGeneratingLabelId(null);
     }
   };
 
@@ -166,6 +203,7 @@ export default function StaffPedidosPage() {
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Total</th>
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
                   <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Cambiar status</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Etiqueta</th>
                 </tr>
               </thead>
               <tbody>
@@ -215,6 +253,40 @@ export default function StaffPedidosPage() {
                       </select>
                       {updatingId === order.id && (
                         <span className="ml-2 text-xs text-gray-400">Guardando…</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {order.labelUrl ? (
+                        <div className="flex flex-col gap-1">
+                          <a
+                            href={order.labelUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-brand-purple hover:underline"
+                          >
+                            <Package size={12} />
+                            Descargar etiqueta
+                          </a>
+                          {order.trackingNumber && (
+                            <span className="text-xs text-gray-500 font-mono">{order.trackingNumber}</span>
+                          )}
+                        </div>
+                      ) : order.shippoRateId ? (
+                        <div className="flex flex-col gap-1">
+                          <button
+                            onClick={() => generateLabel(order.id)}
+                            disabled={generatingLabelId === order.id}
+                            className="inline-flex items-center gap-1 text-xs px-2.5 py-1.5 bg-brand-purple text-white rounded-md hover:bg-brand-purple-dark transition-colors disabled:opacity-50"
+                          >
+                            <Truck size={12} />
+                            {generatingLabelId === order.id ? 'Generando…' : 'Generar etiqueta'}
+                          </button>
+                          {labelError?.id === order.id && (
+                            <p className="text-xs text-red-600 max-w-[180px] leading-tight">{labelError.msg}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400 italic">Sin tarifa Shippo</span>
                       )}
                     </td>
                   </tr>

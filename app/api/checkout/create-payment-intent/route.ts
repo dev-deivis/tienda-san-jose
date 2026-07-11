@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
   const bodyData = await req.json().catch(() => ({})) as {
     shippingCost?: number;
     shippingMethod?: string;
+    shippoRateId?: string;
     shippingAddress?: {
       line1: string;
       city: string;
@@ -107,6 +108,16 @@ export async function POST(req: NextRequest) {
       ),
       shippingCost: String(bodyData.shippingCost ?? 0),
       shippingMethod: bodyData.shippingMethod ?? '',
+      shippoRateId: bodyData.shippoRateId ?? '',
+      customerAddress: bodyData.shippingAddress
+        ? JSON.stringify({
+            line1: bodyData.shippingAddress.line1,
+            city: bodyData.shippingAddress.city,
+            state: bodyData.shippingAddress.state,
+            postal_code: bodyData.shippingAddress.postal_code,
+            country: bodyData.shippingAddress.country,
+          })
+        : '',
       taxAmount: String(taxAmountCents / 100),
       taxCalculationId: taxCalculationId ?? '',
     },

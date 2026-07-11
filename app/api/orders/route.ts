@@ -23,6 +23,9 @@ export async function GET() {
   const serialized = orders.map((o) => ({
     ...o,
     total: parseFloat(o.total.toString()),
+    shippingCost: parseFloat(o.shippingCost.toString()),
+    taxAmount: parseFloat(o.taxAmount.toString()),
+    // shippoRateId, trackingNumber, trackingUrl, labelUrl: String? -> null | string, OK tal cual
     items: o.items.map((item) => ({
       ...item,
       precioUnitario: parseFloat(item.precioUnitario.toString()),

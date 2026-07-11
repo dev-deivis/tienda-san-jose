@@ -40,6 +40,8 @@ export async function POST(req: NextRequest) {
 
     const shippingCost = parseFloat(pi.metadata.shippingCost ?? '0');
     const shippingMethod = pi.metadata.shippingMethod ?? null;
+    const shippoRateId = pi.metadata.shippoRateId || null;
+    const customerAddressRaw = pi.metadata.customerAddress || null;
     const taxAmount = parseFloat(pi.metadata.taxAmount ?? '0');
     const taxCalculationId = pi.metadata.taxCalculationId || null;
 
@@ -67,6 +69,8 @@ export async function POST(req: NextRequest) {
     const subtotal = items.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
     const total = subtotal + shippingCost + taxAmount;
 
+    const addressData = customerAddressRaw ? JSON.parse(customerAddressRaw) : {};
+
     const order = await prisma.order.create({
       data: {
         userId,
@@ -74,8 +78,9 @@ export async function POST(req: NextRequest) {
         total,
         shippingCost,
         shippingMethod,
+        shippoRateId,
         taxAmount,
-        shippingAddress: JSON.stringify({ paymentIntentId: pi.id }),
+        shippingAddress: JSON.stringify({ paymentIntentId: pi.id, ...addressData }),
         items: {
           create: items.map((i) => ({
             productId: i.productId,

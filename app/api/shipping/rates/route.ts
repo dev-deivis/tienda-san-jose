@@ -106,6 +106,7 @@ export async function POST(req: NextRequest) {
         zip: '34135',
         country: 'US',
         phone: '+12392214020',
+        email: 'info@tiendasanjose.com',
       },
       addressTo: {
         name: 'Cliente',
