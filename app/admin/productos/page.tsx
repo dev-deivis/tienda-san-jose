@@ -9,6 +9,7 @@ export default async function AdminProductosPage() {
   const products = await prisma.product.findMany({
     include: {
       category: { select: { id: true, nombre: true, slug: true } },
+      images: { orderBy: { orden: 'asc' }, select: { id: true, url: true, orden: true } },
       _count: { select: { orderItems: true } },
     },
     orderBy: { createdAt: 'desc' },
@@ -25,6 +26,7 @@ export default async function AdminProductosPage() {
     descripcion: p.descripcion ?? null,
     imagen: p.imagen ?? null,
     attributes: p.attributes,
+    images: p.images,
   }));
 
   return (
@@ -75,7 +77,7 @@ export default async function AdminProductosPage() {
                     <td className="px-4 py-3">
                       <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
                         <Image
-                          src={product.imagen ?? `https://picsum.photos/seed/${product.id}/40/40`}
+                          src={product.images[0]?.url ?? product.imagen ?? `https://picsum.photos/seed/${product.id}/40/40`}
                           alt={product.nombre}
                           width={40}
                           height={40}

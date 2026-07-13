@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Save, Plus, Pencil } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import ImageUpload from '@/components/product/image-upload';
 
 type Categoria = {
   id: number;
@@ -34,6 +35,7 @@ export function CategoriaFormModal({ categoria, onClose }: CategoriaFormModalPro
   const [slug, setSlug] = useState(categoria?.slug ?? '');
   const [descripcion, setDescripcion] = useState(categoria?.descripcion ?? '');
   const [imagen, setImagen] = useState(categoria?.imagen ?? '');
+  const [imagenSubiendo, setImagenSubiendo] = useState(false);
   const [slugManual, setSlugManual] = useState(!!categoria);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -152,14 +154,13 @@ export function CategoriaFormModal({ categoria, onClose }: CategoriaFormModalPro
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              URL de imagen
+              Imagen
             </label>
-            <input
-              type="url"
+            <ImageUpload
               value={imagen}
-              onChange={(e) => setImagen(e.target.value)}
-              placeholder="https://ejemplo.com/imagen.jpg"
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple/40 focus:border-brand-purple"
+              onChange={setImagen}
+              onUploadingChange={setImagenSubiendo}
+              folder="tienda-san-jose/categorias"
             />
           </div>
 
@@ -174,11 +175,11 @@ export function CategoriaFormModal({ categoria, onClose }: CategoriaFormModalPro
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || imagenSubiendo}
               className="flex items-center gap-2 px-5 py-2 text-sm bg-brand-purple text-white rounded-md hover:bg-brand-purple-dark transition-colors disabled:opacity-50"
             >
               <Save size={14} />
-              {loading ? 'Guardando…' : 'Guardar'}
+              {imagenSubiendo ? 'Esperando imagen…' : loading ? 'Guardando…' : 'Guardar'}
             </button>
           </div>
         </form>

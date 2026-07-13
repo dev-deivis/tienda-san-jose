@@ -17,7 +17,7 @@ const heroImages = [
 
 export default async function HomePage() {
   const categories = await prisma.category.findMany({
-    select: { id: true, nombre: true, slug: true, descripcion: true },
+    select: { id: true, nombre: true, slug: true, descripcion: true, imagen: true },
     orderBy: { id: 'asc' },
   });
 

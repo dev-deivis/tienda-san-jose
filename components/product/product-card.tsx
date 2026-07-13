@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, ImageIcon } from 'lucide-react';
 
 type Product = {
   id: number;
   nombre: string;
   precio: { toString(): string } | number | string;
   imagen: string | null;
+  images?: { url: string }[];
 };
 
 export function ProductCard({ product }: { product: Product }) {
@@ -15,17 +16,25 @@ export function ProductCard({ product }: { product: Product }) {
     ? parseFloat(product.precio.toString())
     : Number(product.precio);
 
+  const imgSrc = product.images?.[0]?.url ?? product.imagen ?? null;
+
   return (
     <Link href={`/producto/${product.id}`} className="group block">
       <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm transition-shadow hover:shadow-lg">
         {/* Imagen */}
-        <div className="aspect-square overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={product.imagen ?? `https://picsum.photos/seed/product-${product.id}/400/400`}
-            alt={product.nombre}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
+        <div className="aspect-square overflow-hidden bg-gray-50">
+          {imgSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imgSrc}
+              alt={product.nombre}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-300">
+              <ImageIcon size={48} strokeWidth={1} />
+            </div>
+          )}
         </div>
 
         {/* Botón carrito rápido */}

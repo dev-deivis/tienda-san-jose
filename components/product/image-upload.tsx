@@ -8,9 +8,11 @@ type Props = {
   onChange: (url: string) => void;
   /** Notifica al padre si hay una subida en curso para que pueda bloquear el submit */
   onUploadingChange?: (uploading: boolean) => void;
+  /** Carpeta de Cloudinary destino (default: tienda-san-jose/productos) */
+  folder?: string;
 };
 
-export default function ImageUpload({ value, onChange, onUploadingChange }: Props) {
+export default function ImageUpload({ value, onChange, onUploadingChange, folder }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState(value);
   const [uploading, setUploading] = useState(false);
@@ -47,6 +49,7 @@ export default function ImageUpload({ value, onChange, onUploadingChange }: Prop
     try {
       const formData = new FormData();
       formData.append('file', file);
+      if (folder) formData.append('folder', folder);
 
       const res = await fetch('/api/upload', {
         method: 'POST',

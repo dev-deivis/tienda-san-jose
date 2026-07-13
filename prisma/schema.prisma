@@ -31,28 +31,38 @@ model Category {
   id          Int       @id @default(autoincrement())
   nombre      String
   slug        String    @unique
-  descripcion String?
+  descripcion String?   @db.Text
   imagen      String?
   products    Product[]
 }
 
 model Product {
-  id          Int         @id @default(autoincrement())
+  id          Int            @id @default(autoincrement())
   nombre      String
-  descripcion String?     @db.Text
-  precio      Decimal     @db.Decimal(10, 2)
-  stock       Int         @default(0)
+  descripcion String?        @db.Text
+  precio      Decimal        @db.Decimal(10, 2)
+  stock       Int            @default(0)
   imagen      String?
   attributes  Json?
   categoryId  Int
-  category    Category    @relation(fields: [categoryId], references: [id])
-  createdAt   DateTime    @default(now())
-  pesoLb      Float?      @default(0.5)
-  largoIn     Float?      @default(6)
-  anchoIn     Float?      @default(6)
-  altoIn      Float?      @default(2)
+  category    Category       @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime       @default(now())
+  pesoLb      Float?         @default(0.5)
+  largoIn     Float?         @default(6)
+  anchoIn     Float?         @default(6)
+  altoIn      Float?         @default(2)
   orderItems  OrderItem[]
   cartItems   CartItem[]
+  images      ProductImage[]
+}
+
+model ProductImage {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String   @db.Text
+  orden     Int      @default(0)
+  createdAt DateTime @default(now())
 }
 
 model CartItem {

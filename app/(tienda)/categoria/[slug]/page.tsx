@@ -49,7 +49,14 @@ export default async function CategoriaPage({ params, searchParams }: Props) {
   // 4. Traer TODOS los productos de la categoría (para extraer atributos únicos)
   const allProducts = await prisma.product.findMany({
     where: { categoryId: category.id },
-    select: { id: true, nombre: true, precio: true, imagen: true, attributes: true },
+    select: {
+      id: true,
+      nombre: true,
+      precio: true,
+      imagen: true,
+      attributes: true,
+      images: { take: 1, orderBy: { orden: 'asc' }, select: { url: true } },
+    },
   });
 
   // 5. Extraer atributos únicos para filtros

@@ -5,7 +5,17 @@ type Category = {
   nombre: string;
   slug: string;
   descripcion: string | null;
+  imagen: string | null;
 };
+
+// Colores de fondo para categorías sin imagen (cicla por índice)
+const FALLBACK_COLORS = [
+  'bg-brand-purple',
+  'bg-brand-magenta',
+  'bg-brand-gold',
+  'bg-brand-purple-dark',
+  '#6B5B7B',
+];
 
 export function ColeccionesSagradas({ categories }: { categories: Category[] }) {
   return (
@@ -30,12 +40,20 @@ export function ColeccionesSagradas({ categories }: { categories: Category[] }) 
                 i === 0 ? 'col-span-2 row-span-2' : ''
               }`}
             >
-              {/* Imagen de fondo */}
-              <img
-                src={`https://picsum.photos/seed/${cat.slug}/600/400`}
-                alt={cat.nombre}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
+              {cat.imagen ? (
+                /* Imagen real de Cloudinary */
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={cat.imagen}
+                  alt={cat.nombre}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              ) : (
+                /* Fallback: color sólido */
+                <div
+                  className={`absolute inset-0 ${FALLBACK_COLORS[i % 4]}`}
+                />
+              )}
               {/* Overlay degradado */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
               {/* Texto */}

@@ -29,9 +29,10 @@ export async function POST(request: NextRequest) {
     stock?: number;
     categoryId: number;
     imagen?: string;
+    imagenes?: string[];
   };
 
-  const { nombre, descripcion, precio, stock, categoryId, imagen } = body;
+  const { nombre, descripcion, precio, stock, categoryId, imagen, imagenes } = body;
 
   if (!nombre || precio == null || !categoryId) {
     return NextResponse.json(
@@ -40,6 +41,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Usar la primera imagen de imagenes[] como imagen principal de respaldo
+  const imagenPrincipal = imagen ?? (imagenes && imagenes.length > 0 ? imagenes[0] : null);
+
   const product = await prisma.product.create({
     data: {
       nombre,
@@ -47,10 +51,21 @@ export async function POST(request: NextRequest) {
       precio,
       stock: stock ?? 0,
       categoryId: Number(categoryId),
-      imagen: imagen ?? null,
+      imagen: imagenPrincipal ?? null,
     },
     include: { category: { select: { id: true, nombre: true, slug: true } } },
   });
+
+  // Crear ProductImages si vienen en el body
+  if (imagenes && imagenes.length > 0) {
+    await prisma.productImage.createMany({
+      data: imagenes.map((url, i) => ({
+        productId: product.id,
+        url,
+        orden: i,
+      })),
+    });
+  }
 
   return NextResponse.json(
     { ...product, precio: parseFloat(product.precio.toString()) },

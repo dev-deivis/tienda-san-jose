@@ -19,7 +19,10 @@ export default async function ProductoPage({ params }: Props) {
 
   const product = await prisma.product.findUnique({
     where: { id: productId },
-    include: { category: true },
+    include: {
+      category: true,
+      images: { orderBy: { orden: 'asc' } },
+    },
   });
 
   if (!product) notFound();
@@ -28,7 +31,14 @@ export default async function ProductoPage({ params }: Props) {
   const relacionados = await prisma.product.findMany({
     where: { categoryId: product.categoryId, id: { not: productId } },
     take: 4,
-    select: { id: true, nombre: true, precio: true, imagen: true, attributes: true },
+    select: {
+      id: true,
+      nombre: true,
+      precio: true,
+      imagen: true,
+      attributes: true,
+      images: { take: 1, orderBy: { orden: 'asc' }, select: { url: true } },
+    },
   });
 
   // Serializar Decimals antes de pasar a Client Components
@@ -40,6 +50,12 @@ export default async function ProductoPage({ params }: Props) {
     stock: product.stock,
     attributes: product.attributes as Record<string, string> | null,
   };
+
+  const productImages = product.images.map((img) => ({
+    id: img.id,
+    url: img.url,
+    orden: img.orden,
+  }));
 
   const relacionadosPlain = relacionados.map((p) => ({
     ...p,
@@ -72,7 +88,7 @@ export default async function ProductoPage({ params }: Props) {
         {/* Layout 2 columnas */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Galería */}
-          <ProductGallery productId={product.id} productName={product.nombre} />
+          <ProductGallery images={productImages} productName={product.nombre} />
 
           {/* Panel de compra */}
           <ProductPurchasePanel product={productPlain} />

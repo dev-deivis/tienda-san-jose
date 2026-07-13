@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { PlusCircle } from 'lucide-react';
-import ImageUpload from '@/components/product/image-upload';
+import MultiImageUpload from '@/components/product/multi-image-upload';
 
 type Category = { id: number; nombre: string; slug: string };
 
@@ -15,7 +15,7 @@ export default function AgregarProductoForm({ categories }: Props) {
   const [precio, setPrecio] = useState('');
   const [stock, setStock] = useState('0');
   const [categoryId, setCategoryId] = useState('');
-  const [imagen, setImagen] = useState('');
+  const [imagenes, setImagenes] = useState<string[]>([]);
   const [imagenSubiendo, setImagenSubiendo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
@@ -34,7 +34,7 @@ export default function AgregarProductoForm({ categories }: Props) {
           precio: parseFloat(precio),
           stock: parseInt(stock, 10),
           categoryId: parseInt(categoryId, 10),
-          imagen: imagen || null,
+          imagenes: imagenes.length > 0 ? imagenes : undefined,
         }),
       });
 
@@ -44,7 +44,7 @@ export default function AgregarProductoForm({ categories }: Props) {
         setPrecio('');
         setStock('0');
         setCategoryId('');
-        setImagen('');
+        setImagenes([]);
       } else {
         const data = await res.json() as { error?: string };
         setFeedback({ type: 'error', msg: data.error ?? 'Error al crear el producto.' });
@@ -137,11 +137,10 @@ export default function AgregarProductoForm({ categories }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Imagen del producto
+          Imágenes del producto
         </label>
-        <ImageUpload
-          value={imagen}
-          onChange={setImagen}
+        <MultiImageUpload
+          onChange={setImagenes}
           onUploadingChange={setImagenSubiendo}
         />
       </div>

@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { Pencil, X, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import ImageUpload from '@/components/product/image-upload';
+import MultiImageUpload from '@/components/product/multi-image-upload';
 
 type Category = { id: number; nombre: string; slug: string };
+
+type ProductImageItem = { id: number; url: string; orden: number };
 
 type Product = {
   id: number;
@@ -16,6 +18,7 @@ type Product = {
   imagen: string | null;
   categoryId: number;
   category: Category;
+  images: ProductImageItem[];
 };
 
 type Props = {
@@ -29,7 +32,6 @@ export default function EditProductModal({ product, categories }: Props) {
   const [descripcion, setDescripcion] = useState(product.descripcion ?? '');
   const [precio, setPrecio] = useState(product.precio.toString());
   const [stock, setStock] = useState(product.stock.toString());
-  const [imagen, setImagen] = useState(product.imagen ?? '');
   const [categoryId, setCategoryId] = useState(product.categoryId.toString());
   const [imagenSubiendo, setImagenSubiendo] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -50,7 +52,6 @@ export default function EditProductModal({ product, categories }: Props) {
           descripcion: descripcion || null,
           precio: parseFloat(precio),
           stock: parseInt(stock, 10),
-          imagen: imagen || null,
           categoryId: parseInt(categoryId, 10),
         }),
       });
@@ -174,11 +175,11 @@ export default function EditProductModal({ product, categories }: Props) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Imagen del producto
+                  Imágenes del producto
                 </label>
-                <ImageUpload
-                  value={imagen}
-                  onChange={setImagen}
+                <MultiImageUpload
+                  productId={product.id}
+                  initialImages={product.images}
                   onUploadingChange={setImagenSubiendo}
                 />
               </div>
