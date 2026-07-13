@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { PlusCircle } from 'lucide-react';
+import ImageUpload from '@/components/product/image-upload';
 
 type Category = { id: number; nombre: string; slug: string };
 
@@ -14,6 +15,8 @@ export default function AgregarProductoForm({ categories }: Props) {
   const [precio, setPrecio] = useState('');
   const [stock, setStock] = useState('0');
   const [categoryId, setCategoryId] = useState('');
+  const [imagen, setImagen] = useState('');
+  const [imagenSubiendo, setImagenSubiendo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
@@ -31,6 +34,7 @@ export default function AgregarProductoForm({ categories }: Props) {
           precio: parseFloat(precio),
           stock: parseInt(stock, 10),
           categoryId: parseInt(categoryId, 10),
+          imagen: imagen || null,
         }),
       });
 
@@ -40,6 +44,7 @@ export default function AgregarProductoForm({ categories }: Props) {
         setPrecio('');
         setStock('0');
         setCategoryId('');
+        setImagen('');
       } else {
         const data = await res.json() as { error?: string };
         setFeedback({ type: 'error', msg: data.error ?? 'Error al crear el producto.' });
@@ -130,14 +135,25 @@ export default function AgregarProductoForm({ categories }: Props) {
         </div>
       </div>
 
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Imagen del producto
+        </label>
+        <ImageUpload
+          value={imagen}
+          onChange={setImagen}
+          onUploadingChange={setImagenSubiendo}
+        />
+      </div>
+
       <div className="flex justify-end">
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || imagenSubiendo}
           className="flex items-center gap-2 bg-brand-purple text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-brand-purple-dark transition-colors disabled:opacity-50"
         >
           <PlusCircle size={16} />
-          {loading ? 'Guardando…' : 'Agregar producto'}
+          {imagenSubiendo ? 'Esperando imagen…' : loading ? 'Guardando…' : 'Agregar producto'}
         </button>
       </div>
     </form>

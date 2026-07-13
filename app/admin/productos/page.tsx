@@ -38,7 +38,7 @@ export default async function AdminProductosPage() {
           </p>
         </div>
         <Link
-          href="/staff/productos/nuevo"
+          href="/admin/productos/nuevo"
           className="flex items-center gap-2 bg-brand-purple text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-brand-purple-dark transition-colors"
         >
           <PlusCircle size={16} />

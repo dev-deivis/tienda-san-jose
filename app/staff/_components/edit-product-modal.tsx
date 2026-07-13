@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Pencil, X, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import ImageUpload from '@/components/product/image-upload';
 
 type Category = { id: number; nombre: string; slug: string };
 
@@ -30,6 +31,7 @@ export default function EditProductModal({ product, categories }: Props) {
   const [stock, setStock] = useState(product.stock.toString());
   const [imagen, setImagen] = useState(product.imagen ?? '');
   const [categoryId, setCategoryId] = useState(product.categoryId.toString());
+  const [imagenSubiendo, setImagenSubiendo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -172,14 +174,12 @@ export default function EditProductModal({ product, categories }: Props) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  URL de imagen
+                  Imagen del producto
                 </label>
-                <input
-                  type="url"
+                <ImageUpload
                   value={imagen}
-                  onChange={(e) => setImagen(e.target.value)}
-                  placeholder="https://ejemplo.com/imagen.jpg"
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple/40 focus:border-brand-purple"
+                  onChange={setImagen}
+                  onUploadingChange={setImagenSubiendo}
                 />
               </div>
 
@@ -194,11 +194,11 @@ export default function EditProductModal({ product, categories }: Props) {
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || imagenSubiendo}
                   className="flex items-center gap-2 px-5 py-2 text-sm bg-brand-purple text-white rounded-md hover:bg-brand-purple-dark transition-colors disabled:opacity-50"
                 >
                   <Save size={14} />
-                  {loading ? 'Guardando…' : 'Guardar cambios'}
+                  {imagenSubiendo ? 'Esperando imagen…' : loading ? 'Guardando…' : 'Guardar cambios'}
                 </button>
               </div>
             </form>
