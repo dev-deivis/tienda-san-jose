@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { stripe } from '@/lib/stripe';
+import { createOrderFromPaymentIntent } from '@/lib/create-order-from-payment';
 import { ClearCartOnSuccess } from './clear-cart';
 
 type SearchParams = Promise<{
@@ -28,6 +29,13 @@ export default async function ConfirmacionPage({
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     succeeded = paymentIntent.status === 'succeeded';
     intentId = paymentIntent.id;
+
+    // Fallback de seguridad: si el pago fue exitoso, garantizamos que
+    // el Order exista en BD aunque el webhook haya fallado o tardado.
+    // La función es idempotente — no crea duplicados si el webhook ya actuó.
+    if (succeeded) {
+      await createOrderFromPaymentIntent(paymentIntent);
+    }
   } catch {
     // Si falla la consulta a Stripe mostramos error generico
     succeeded = false;
