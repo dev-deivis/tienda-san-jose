@@ -15,6 +15,8 @@ export default async function StaffHomePage() {
   const pedidosSerialized = pedidosRecientes.map((o) => ({
     ...o,
     total: parseFloat(o.total.toString()),
+    shippingCost: parseFloat(o.shippingCost.toString()),
+    taxAmount: parseFloat(o.taxAmount.toString()),
     createdAt: o.createdAt.toISOString(),
   }));
 
