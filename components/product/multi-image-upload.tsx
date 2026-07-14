@@ -81,11 +81,9 @@ export default function MultiImageUpload({
         setImages((prev) => [...prev, data.productImage!]);
       } else {
         const tempId = `temp-${Date.now()}-${Math.random()}`;
-        setTempImages((prev) => {
-          const next = [...prev, { tempId, url: data.url! }];
-          onChange?.(next.map((t) => t.url));
-          return next;
-        });
+        const nextTempImages = [...tempImages, { tempId, url: data.url! }];
+        setTempImages(nextTempImages);
+        onChange?.(nextTempImages.map((t) => t.url));
       }
     } catch {
       setError('Error de conexión al subir la imagen.');
@@ -117,11 +115,9 @@ export default function MultiImageUpload({
   };
 
   const handleDeleteTemp = (tempId: string) => {
-    setTempImages((prev) => {
-      const next = prev.filter((t) => t.tempId !== tempId);
-      onChange?.(next.map((t) => t.url));
-      return next;
-    });
+    const next = tempImages.filter((t) => t.tempId !== tempId);
+    setTempImages(next);
+    onChange?.(next.map((t) => t.url));
   };
 
   const displayItems = isEditMode

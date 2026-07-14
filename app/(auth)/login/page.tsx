@@ -49,24 +49,26 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-md">
-      {/* Logo / Branding */}
-      <div className="text-center mb-8">
+      {/* Logo */}
+      <div className="text-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/logo.png"
           alt="Tienda San José"
-          className="w-20 h-20 object-contain mx-auto mb-3"
+          className="w-86 h-86 object-contain mx-auto"
         />
-        <h1 className="font-serif text-2xl font-bold text-brand-purple">
-          Iniciar sesión
-        </h1>
-        <p className="text-sm text-gray-400 mt-1">
-          Bienvenido de vuelta a Tienda San José
-        </p>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm p-8">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <div className="bg-white rounded-2xl shadow-sm p-10 -mt-10">
+        <div className="text-center mb-7">
+          <h1 className="font-serif text-2xl font-bold text-brand-purple">
+            Iniciar sesión
+          </h1>
+          <p className="text-sm text-gray-400 mt-1">
+            Bienvenido a Tienda San José
+          </p>
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           {/* Email */}
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-gray-700">
@@ -78,7 +80,7 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@email.com"
               required
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple/20 focus:border-brand-purple transition-colors"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple/20 focus:border-brand-purple transition-colors"
             />
           </div>
 
@@ -93,7 +95,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple/20 focus:border-brand-purple transition-colors"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple/20 focus:border-brand-purple transition-colors"
             />
           </div>
 

@@ -138,13 +138,6 @@ export default function RegistroPage() {
             />
           </div>
 
-          {/* Nota sobre roles */}
-          <p className="text-xs text-gray-400 bg-gray-50 rounded-xl px-4 py-3">
-            Las cuentas públicas se crean como <strong>Cliente</strong>. Los
-            roles de Staff y Admin se asignan manualmente desde el panel de
-            administración.
-          </p>
-
           {/* Error */}
           {error && (
             <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">
