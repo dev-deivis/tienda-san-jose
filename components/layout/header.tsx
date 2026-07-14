@@ -1,25 +1,35 @@
 'use client';
 
 import Link from 'next/link';
-import { ShoppingCart, User, Menu, X, LogOut, UserCircle, Package } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, LogOut, UserCircle, Package, ChevronDown } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useCart } from '@/context/cart-context';
 import { useAuth } from '@/context/auth-context';
 
 type Category = { id: number; nombre: string; slug: string };
 
+const NAV_LIMIT = 5;
+
 export function Header({ categories }: { categories: Category[] }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const moreRef = useRef<HTMLDivElement>(null);
   const { getItemCount } = useCart();
   const { user, logout } = useAuth();
 
-  // Cerrar dropdown al hacer click fuera
+  const visibleCats = categories.slice(0, NAV_LIMIT);
+  const extraCats = categories.slice(NAV_LIMIT);
+
+  // Cerrar dropdowns al hacer click fuera
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false);
+      }
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setMoreOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -48,7 +58,7 @@ export function Header({ categories }: { categories: Category[] }) {
 
           {/* Navegación desktop */}
           <nav className="hidden lg:flex items-center gap-6">
-            {categories.map((cat) => (
+            {visibleCats.map((cat) => (
               <Link
                 key={cat.id}
                 href={`/categoria/${cat.slug}`}
@@ -57,6 +67,37 @@ export function Header({ categories }: { categories: Category[] }) {
                 {cat.nombre}
               </Link>
             ))}
+
+            {/* Dropdown "Más" — solo si hay categorías extra */}
+            {extraCats.length > 0 && (
+              <div className="relative" ref={moreRef}>
+                <button
+                  onClick={() => setMoreOpen((prev) => !prev)}
+                  className="flex items-center gap-1 text-sm text-gray-600 hover:text-brand-purple transition-colors whitespace-nowrap"
+                >
+                  Más
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform duration-200 ${moreOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {moreOpen && (
+                  <div className="absolute left-0 top-full mt-2 min-w-[180px] bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
+                    {extraCats.map((cat) => (
+                      <Link
+                        key={cat.id}
+                        href={`/categoria/${cat.slug}`}
+                        onClick={() => setMoreOpen(false)}
+                        className="block px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-brand-purple transition-colors whitespace-nowrap"
+                      >
+                        {cat.nombre}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </nav>
 
           {/* Iconos + hamburguesa */}

@@ -47,6 +47,7 @@ export const ArcGalleryHero: React.FC<ArcGalleryHeroProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, [radiusLg, radiusMd, radiusSm, cardSizeLg, cardSizeMd, cardSizeSm]);
 
+  const hasImages = images.length > 0;
   const count = Math.max(images.length, 2);
   const step = (endAngle - startAngle) / (count - 1);
 
@@ -54,6 +55,7 @@ export const ArcGalleryHero: React.FC<ArcGalleryHeroProps> = ({
     <section
       className={`relative overflow-hidden bg-cream text-gray-900 min-h-screen flex flex-col ${className}`}
     >
+      {hasImages && (
       <div
         className="relative mx-auto"
         style={{ width: '100%', height: dimensions.radius * 1.2 }}
@@ -99,9 +101,10 @@ export const ArcGalleryHero: React.FC<ArcGalleryHeroProps> = ({
           })}
         </div>
       </div>
+      )}
 
       <div
-        className="relative z-10 flex-1 flex items-center justify-center px-6 -mt-64 md:-mt-80 lg:-mt-96 opacity-0 animate-fade-in"
+        className={`relative z-10 flex-1 flex items-center justify-center px-6 opacity-0 animate-fade-in ${hasImages ? '-mt-64 md:-mt-80 lg:-mt-96' : 'mt-0'}`}
         style={{ animationDelay: '800ms', animationFillMode: 'forwards' }}
       >
         <div className="text-center max-w-2xl px-6">
