@@ -5,6 +5,7 @@ import { ShoppingCart, User, Menu, X, LogOut, UserCircle, Package, ChevronDown }
 import { useState, useRef, useEffect } from 'react';
 import { useCart } from '@/context/cart-context';
 import { useAuth } from '@/context/auth-context';
+import { SearchOverlay } from '@/components/search/search-overlay';
 
 type Category = { id: number; nombre: string; slug: string };
 
@@ -102,6 +103,7 @@ export function Header({ categories }: { categories: Category[] }) {
 
           {/* Iconos + hamburguesa */}
           <div className="flex items-center gap-3">
+            <SearchOverlay />
             <Link
               href="/carrito"
               className="relative p-2 text-gray-600 hover:text-brand-purple transition-colors"
