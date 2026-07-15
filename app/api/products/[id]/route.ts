@@ -27,11 +27,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const body = await request.json() as {
     nombre?: string;
-    descripcion?: string;
+    descripcion?: string | null;
     precio?: number;
     stock?: number;
     categoryId?: number;
     imagen?: string;
+    attributes?: Record<string, string> | null;
   };
 
   const data: Record<string, unknown> = {};
@@ -41,6 +42,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   if (body.stock !== undefined) data.stock = body.stock;
   if (body.categoryId !== undefined) data.categoryId = Number(body.categoryId);
   if (body.imagen !== undefined) data.imagen = body.imagen;
+  if (body.attributes !== undefined) data.attributes = body.attributes ?? null;
 
   const product = await prisma.product.update({
     where: { id: Number(id) },

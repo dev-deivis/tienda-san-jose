@@ -3,6 +3,11 @@
 import { useState } from 'react';
 import { PlusCircle } from 'lucide-react';
 import MultiImageUpload from '@/components/product/multi-image-upload';
+import AttributesEditor, {
+  type AttributeRow,
+  validateRows,
+  rowsToObject,
+} from './attributes-editor';
 
 type Category = { id: number; nombre: string; slug: string };
 
@@ -17,14 +22,24 @@ export default function AgregarProductoForm({ categories }: Props) {
   const [stock, setStock] = useState('0');
   const [categoryId, setCategoryId] = useState('');
   const [imagenes, setImagenes] = useState<string[]>([]);
+  const [attributeRows, setAttributeRows] = useState<AttributeRow[]>([]);
   const [imagenSubiendo, setImagenSubiendo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setFeedback(null);
+
+    const attrError = validateRows(attributeRows);
+    if (attrError) {
+      setFeedback({ type: 'error', msg: attrError });
+      return;
+    }
+
+    setLoading(true);
+
+    const attributes = rowsToObject(attributeRows);
 
     try {
       const res = await fetch('/api/products', {
@@ -37,6 +52,7 @@ export default function AgregarProductoForm({ categories }: Props) {
           stock: parseInt(stock, 10),
           categoryId: parseInt(categoryId, 10),
           imagenes: imagenes.length > 0 ? imagenes : undefined,
+          attributes: Object.keys(attributes).length > 0 ? attributes : undefined,
         }),
       });
 
@@ -48,6 +64,7 @@ export default function AgregarProductoForm({ categories }: Props) {
         setStock('0');
         setCategoryId('');
         setImagenes([]);
+        setAttributeRows([]);
       } else {
         const data = await res.json() as { error?: string };
         setFeedback({ type: 'error', msg: data.error ?? 'Error al crear el producto.' });
@@ -149,6 +166,13 @@ export default function AgregarProductoForm({ categories }: Props) {
           placeholder="Descripción opcional del producto"
           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple/40 focus:border-brand-purple resize-none"
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Atributos del producto
+        </label>
+        <AttributesEditor rows={attributeRows} onChange={setAttributeRows} />
       </div>
 
       <div>

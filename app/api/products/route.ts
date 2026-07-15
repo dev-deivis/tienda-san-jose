@@ -30,9 +30,10 @@ export async function POST(request: NextRequest) {
     categoryId: number;
     imagen?: string;
     imagenes?: string[];
+    attributes?: Record<string, string>;
   };
 
-  const { nombre, descripcion, precio, stock, categoryId, imagen, imagenes } = body;
+  const { nombre, descripcion, precio, stock, categoryId, imagen, imagenes, attributes } = body;
 
   if (!nombre || precio == null || !categoryId) {
     return NextResponse.json(
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
       stock: stock ?? 0,
       categoryId: Number(categoryId),
       imagen: imagenPrincipal ?? null,
+      ...(attributes ? { attributes } : {}),
     },
     include: { category: { select: { id: true, nombre: true, slug: true } } },
   });

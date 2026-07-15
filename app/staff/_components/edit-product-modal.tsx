@@ -4,6 +4,12 @@ import { useState } from 'react';
 import { Pencil, X, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import MultiImageUpload from '@/components/product/multi-image-upload';
+import AttributesEditor, {
+  type AttributeRow,
+  objectToRows,
+  validateRows,
+  rowsToObject,
+} from './attributes-editor';
 
 type Category = { id: number; nombre: string; slug: string };
 
@@ -19,6 +25,7 @@ type Product = {
   categoryId: number;
   category: Category;
   images: ProductImageItem[];
+  attributes: unknown;
 };
 
 type Props = {
@@ -33,6 +40,9 @@ export default function EditProductModal({ product, categories }: Props) {
   const [precio, setPrecio] = useState(product.precio.toString());
   const [stock, setStock] = useState(product.stock.toString());
   const [categoryId, setCategoryId] = useState(product.categoryId.toString());
+  const [attributeRows, setAttributeRows] = useState<AttributeRow[]>(() =>
+    objectToRows(product.attributes)
+  );
   const [imagenSubiendo, setImagenSubiendo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,8 +50,17 @@ export default function EditProductModal({ product, categories }: Props) {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
+
+    const attrError = validateRows(attributeRows);
+    if (attrError) {
+      setError(attrError);
+      return;
+    }
+
+    setLoading(true);
+
+    const attributes = rowsToObject(attributeRows);
 
     try {
       const res = await fetch(`/api/products/${product.id}`, {
@@ -53,6 +72,7 @@ export default function EditProductModal({ product, categories }: Props) {
           precio: parseFloat(precio),
           stock: parseInt(stock, 10),
           categoryId: parseInt(categoryId, 10),
+          attributes: Object.keys(attributes).length > 0 ? attributes : null,
         }),
       });
 
@@ -171,6 +191,13 @@ export default function EditProductModal({ product, categories }: Props) {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Atributos del producto
+                </label>
+                <AttributesEditor rows={attributeRows} onChange={setAttributeRows} />
               </div>
 
               <div>
