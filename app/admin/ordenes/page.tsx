@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { RefreshCw, Package, Truck, X } from 'lucide-react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { RefreshCw, Package, Truck, X, Info } from 'lucide-react';
 
 type OrderUser = { email: string; nombre: string | null };
 type OrderItem = {
@@ -16,6 +16,7 @@ type Order = {
   status: string;
   total: number;
   shippingCost: number;
+  taxAmount: number;
   createdAt: string;
   shippingAddress: string;
   shippingMethod: string | null;
@@ -62,6 +63,66 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 const NEXT_STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+
+function TotalCell({ total, shippingCost, taxAmount }: { total: number; shippingCost: number; taxAmount: number }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const subtotal = total - shippingCost - taxAmount;
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative inline-flex items-center gap-1">
+      <span className="text-sm font-semibold text-gray-800">${total.toFixed(2)}</span>
+      <button
+        type="button"
+        aria-label="Ver desglose"
+        onClick={() => setOpen((v) => !v)}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        className="text-gray-400 hover:text-brand-purple transition-colors"
+      >
+        <Info size={13} />
+      </button>
+      {open && (
+        <div
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 w-48 bg-white border border-gray-200 rounded-xl shadow-lg px-3 py-2.5 text-xs text-gray-700 whitespace-nowrap"
+        >
+          <div className="flex justify-between gap-4 mb-1">
+            <span className="text-gray-500">Subtotal</span>
+            <span className="font-medium">${subtotal.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between gap-4 mb-1">
+            <span className="text-gray-500">Envío</span>
+            <span className="font-medium">${shippingCost.toFixed(2)}</span>
+          </div>
+          {taxAmount > 0 && (
+            <div className="flex justify-between gap-4 mb-1">
+              <span className="text-gray-500">Impuestos</span>
+              <span className="font-medium">${taxAmount.toFixed(2)}</span>
+            </div>
+          )}
+          <div className="flex justify-between gap-4 border-t border-gray-100 pt-1.5 mt-1">
+            <span className="font-semibold text-gray-800">Total</span>
+            <span className="font-semibold text-gray-800">${total.toFixed(2)}</span>
+          </div>
+          {/* flecha */}
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-200" />
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-[-1px] border-4 border-transparent border-b-white" />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function AdminOrdenesPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -276,8 +337,8 @@ export default function AdminOrdenesPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">{formatDate(order.createdAt)}</td>
-                    <td className="px-4 py-3 text-sm font-semibold text-gray-800">
-                      ${order.total.toFixed(2)}
+                    <td className="px-4 py-3">
+                      <TotalCell total={order.total} shippingCost={order.shippingCost} taxAmount={order.taxAmount} />
                     </td>
                     <td className="px-4 py-3">
                       <span
