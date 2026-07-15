@@ -45,7 +45,12 @@ export default async function MisPedidosPage() {
       items: {
         include: {
           product: {
-            select: { id: true, nombre: true, imagen: true },
+            select: {
+              id: true,
+              nombre: true,
+              imagen: true,
+              images: { take: 1, orderBy: { orden: 'asc' }, select: { url: true } },
+            },
           },
         },
       },
@@ -121,6 +126,7 @@ export default async function MisPedidosPage() {
                 <div className="px-6 py-4 flex flex-col gap-2">
                   {order.items.map((item) => {
                     const imgSrc =
+                      item.product.images[0]?.url ??
                       item.product.imagen ??
                       `https://picsum.photos/seed/product-${item.product.id}/400/400`;
                     return (

@@ -42,6 +42,9 @@ export default async function ProductoPage({ params }: Props) {
   });
 
   // Serializar Decimals antes de pasar a Client Components
+  // Imagen principal: primer item de la relación images (ordenada), con fallback al campo imagen viejo
+  const imagenPrincipal = product.images[0]?.url ?? product.imagen ?? null;
+
   const productPlain = {
     id: product.id,
     nombre: product.nombre,
@@ -49,6 +52,7 @@ export default async function ProductoPage({ params }: Props) {
     descripcion: product.descripcion,
     stock: product.stock,
     attributes: product.attributes as Record<string, string> | null,
+    imagen: imagenPrincipal,
   };
 
   const productImages = product.images.map((img) => ({

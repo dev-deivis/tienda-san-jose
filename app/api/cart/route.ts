@@ -16,7 +16,14 @@ async function loadCart(userId: number) {
   const dbItems = await prisma.cartItem.findMany({
     where: { userId },
     include: {
-      product: { select: { nombre: true, precio: true, imagen: true } },
+      product: {
+        select: {
+          nombre: true,
+          precio: true,
+          imagen: true,
+          images: { take: 1, orderBy: { orden: 'asc' }, select: { url: true } },
+        },
+      },
     },
     orderBy: { createdAt: 'asc' },
   });
@@ -26,7 +33,10 @@ async function loadCart(userId: number) {
     nombre: item.product.nombre,
     precio: parseFloat(item.product.precio.toString()),
     cantidad: item.cantidad,
-    imagen: item.product.imagen ?? `https://picsum.photos/seed/product-${item.productId}/400/400`,
+    imagen:
+      item.product.images[0]?.url ??
+      item.product.imagen ??
+      `https://picsum.photos/seed/product-${item.productId}/400/400`,
     variante: (item.variante as string | null) ?? undefined,
   }));
 }

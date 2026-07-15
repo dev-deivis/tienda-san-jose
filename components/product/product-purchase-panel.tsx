@@ -12,6 +12,7 @@ type Props = {
     descripcion: string | null;
     stock: number;
     attributes: Record<string, string> | null;
+    imagen: string | null;
   };
 };
 
@@ -28,7 +29,7 @@ export function ProductPurchasePanel({ product }: Props) {
         productId: product.id,
         nombre: product.nombre,
         precio: product.precio,
-        imagen: `https://picsum.photos/seed/product-${product.id}/400/400`,
+        imagen: product.imagen ?? `https://picsum.photos/seed/product-${product.id}/400/400`,
         variante: Object.values(attrs).join(' / ') || undefined,
       },
       cantidad

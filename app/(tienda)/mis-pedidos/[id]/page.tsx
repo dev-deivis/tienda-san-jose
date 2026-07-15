@@ -63,7 +63,11 @@ export default async function DetallePedidoPage({ params }: Props) {
     include: {
       items: {
         include: {
-          product: true,
+          product: {
+            include: {
+              images: { take: 1, orderBy: { orden: 'asc' }, select: { url: true } },
+            },
+          },
         },
       },
     },
@@ -194,6 +198,7 @@ export default async function DetallePedidoPage({ params }: Props) {
             <div className="flex flex-col gap-4">
               {order.items.map((item) => {
                 const imgSrc =
+                  item.product.images[0]?.url ??
                   item.product.imagen ??
                   `https://picsum.photos/seed/product-${item.product.id}/400/400`;
                 const unitPrice = parseFloat(item.precioUnitario.toString());
