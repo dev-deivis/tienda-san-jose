@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { RefreshCw, Package, Truck } from 'lucide-react';
+import { RefreshCw, Package, Truck, X } from 'lucide-react';
 
 type OrderUser = { email: string; nombre: string | null };
 type OrderItem = {
@@ -15,6 +15,7 @@ type Order = {
   id: number;
   status: string;
   total: number;
+  shippingCost: number;
   createdAt: string;
   shippingAddress: string;
   shippingMethod: string | null;
@@ -24,6 +25,21 @@ type Order = {
   labelUrl: string | null;
   user: OrderUser;
   items: OrderItem[];
+};
+
+type ManualRate = {
+  rateId: string;
+  carrier: string;
+  service: string;
+  amount: number;
+  days: number | null;
+};
+
+type ManualSelectionState = {
+  orderId: number;
+  originalService: string | null;
+  originalPrice: number;
+  rates: ManualRate[];
 };
 
 const STATUS_FILTERS = ['Todos', 'pending', 'processing', 'shipped', 'delivered'] as const;
@@ -55,6 +71,7 @@ export default function AdminOrdenesPage() {
   const [generatingLabelId, setGeneratingLabelId] = useState<number | null>(null);
   const [labelError, setLabelError] = useState<{ id: number; msg: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [manualSelection, setManualSelection] = useState<ManualSelectionState | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -96,28 +113,65 @@ export default function AdminOrdenesPage() {
     }
   };
 
-  const generateLabel = async (orderId: number) => {
+  const applyLabelResult = (
+    orderId: number,
+    data: { labelUrl: string; trackingNumber: string | null; trackingUrl: string | null }
+  ) => {
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === orderId
+          ? { ...o, labelUrl: data.labelUrl, trackingNumber: data.trackingNumber, trackingUrl: data.trackingUrl, status: 'shipped' }
+          : o
+      )
+    );
+  };
+
+  const generateLabel = async (orderId: number, rateId?: string) => {
     setGeneratingLabelId(orderId);
     setLabelError(null);
     try {
-      const res = await fetch(`/api/orders/${orderId}/generate-label`, { method: 'POST' });
-      const data = await res.json();
-      if (res.ok) {
-        setOrders((prev) =>
-          prev.map((o) =>
-            o.id === orderId
-              ? {
-                  ...o,
-                  labelUrl: data.labelUrl,
-                  trackingNumber: data.trackingNumber,
-                  trackingUrl: data.trackingUrl,
-                  status: 'shipped',
-                }
-              : o
-          )
-        );
-      } else {
+      const res = await fetch(`/api/orders/${orderId}/generate-label`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rateId ? { rateId } : {}),
+      });
+      const data = await res.json() as {
+        // éxito
+        labelUrl?: string;
+        trackingNumber?: string | null;
+        trackingUrl?: string | null;
+        // selección manual requerida
+        requires_manual_selection?: boolean;
+        original_service?: string | null;
+        original_price?: number;
+        rates?: ManualRate[];
+        // error
+        error?: string;
+      };
+
+      if (!res.ok) {
         setLabelError({ id: orderId, msg: data.error ?? 'Error al generar la etiqueta.' });
+        return;
+      }
+
+      if (data.requires_manual_selection && data.rates) {
+        // El rate expiró y la diferencia de precio es >30% — pedir al admin que elija
+        setManualSelection({
+          orderId,
+          originalService: data.original_service ?? null,
+          originalPrice: data.original_price ?? 0,
+          rates: data.rates,
+        });
+        return;
+      }
+
+      if (data.labelUrl) {
+        applyLabelResult(orderId, {
+          labelUrl: data.labelUrl,
+          trackingNumber: data.trackingNumber ?? null,
+          trackingUrl: data.trackingUrl ?? null,
+        });
+        setManualSelection(null);
       }
     } catch {
       setLabelError({ id: orderId, msg: 'Error de conexión al generar la etiqueta.' });
@@ -296,6 +350,76 @@ export default function AdminOrdenesPage() {
       <p className="text-xs text-gray-400 text-right">
         Mostrando {filtered.length} de {orders.length} pedidos
       </p>
+
+      {/* Modal de selección manual de rate */}
+      {manualSelection && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div>
+                <h3 className="font-semibold text-gray-800">Selecciona un servicio de envío</h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  El servicio original{manualSelection.originalService ? ` "${manualSelection.originalService}"` : ''} ya no
+                  está disponible o su precio cambió significativamente
+                  {manualSelection.originalPrice > 0 ? ` (original: $${manualSelection.originalPrice.toFixed(2)})` : ''}.
+                </p>
+              </div>
+              <button
+                onClick={() => setManualSelection(null)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="px-6 py-4 space-y-2 max-h-80 overflow-y-auto">
+              {manualSelection.rates.map((rate) => {
+                const diffFromOriginal =
+                  manualSelection.originalPrice > 0
+                    ? ((rate.amount - manualSelection.originalPrice) / manualSelection.originalPrice) * 100
+                    : null;
+
+                return (
+                  <button
+                    key={rate.rateId}
+                    onClick={() => generateLabel(manualSelection.orderId, rate.rateId)}
+                    disabled={generatingLabelId === manualSelection.orderId}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 hover:border-brand-purple hover:bg-brand-purple/5 transition-colors text-left disabled:opacity-50"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">
+                        {rate.carrier} — {rate.service}
+                      </p>
+                      {rate.days && (
+                        <p className="text-xs text-gray-400 mt-0.5">{rate.days} días estimados</p>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0 ml-4">
+                      <p className="text-sm font-semibold text-gray-800">${rate.amount.toFixed(2)}</p>
+                      {diffFromOriginal !== null && (
+                        <p className={`text-xs ${diffFromOriginal > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                          {diffFromOriginal > 0 ? '+' : ''}{diffFromOriginal.toFixed(0)}% vs original
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {generatingLabelId === manualSelection.orderId && (
+              <div className="px-6 pb-4 text-center text-sm text-gray-500">
+                Generando etiqueta…
+              </div>
+            )}
+            {labelError?.id === manualSelection.orderId && (
+              <div className="px-6 pb-4 text-sm text-red-600 text-center">
+                {labelError.msg}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -17,8 +17,11 @@ const ADDRESS_FROM = {
   email: 'info@tiendasanjose.com',
 };
 
+/** Umbral máximo de diferencia de precio aceptable para auto-seleccionar un rate (30%) */
+const MAX_PRICE_DIFF_RATIO = 0.30;
+
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -33,6 +36,15 @@ export async function POST(
     const orderId = parseInt(idStr, 10);
     if (isNaN(orderId)) {
       return NextResponse.json({ error: 'ID de pedido inválido' }, { status: 400 });
+    }
+
+    // Leer body opcional (rateId de selección manual)
+    let manualRateId: string | null = null;
+    try {
+      const body = await req.json() as { rateId?: string };
+      manualRateId = body.rateId ?? null;
+    } catch {
+      // body vacío o no-JSON → ok, no hay selección manual
     }
 
     // 3. Buscar el pedido con sus items y productos
@@ -64,29 +76,62 @@ export async function POST(
       apiKeyHeader: process.env.SHIPPO_API_TOKEN!,
     });
 
-    // 5. Intentar comprar label con el rate original
     type ShippoTransaction = Awaited<ReturnType<typeof shippo.transactions.create>>;
     let transaction: ShippoTransaction | null = null;
 
-    try {
-      const t = await shippo.transactions.create({
-        rate: order.shippoRateId,
-        labelFileType: LabelFileTypeEnum.Pdf,
-        async: false,
-      });
-      if (t.status === 'SUCCESS') {
-        transaction = t;
-      } else {
-        const msgs = (t.messages ?? []).map((m) => m.text).filter(Boolean).join(' | ');
-        console.error(`[generate-label] Rate original ERROR — ${msgs || 'sin detalle'}`);
+    // ── CAMINO A: selección manual del admin ──────────────────────────────────
+    if (manualRateId) {
+      console.log(
+        `[generate-label] order=${orderId} — usando rate de selección manual: ${manualRateId}`
+      );
+      try {
+        const t = await shippo.transactions.create({
+          rate: manualRateId,
+          labelFileType: LabelFileTypeEnum.Pdf,
+          async: false,
+        });
+        if (t.status === 'SUCCESS') {
+          transaction = t;
+        } else {
+          const msgs = (t.messages ?? []).map((m) => m.text).filter(Boolean).join(' | ');
+          return NextResponse.json(
+            { error: `Shippo rechazó el label con el rate seleccionado${msgs ? `: ${msgs}` : '.'}` },
+            { status: 502 }
+          );
+        }
+      } catch (err) {
+        console.error('[generate-label] Error comprando label con rate manual:', err);
+        return NextResponse.json(
+          { error: 'Error al comprar el label con el rate seleccionado.' },
+          { status: 502 }
+        );
       }
-    } catch (err) {
-      console.error('[generate-label] Excepción comprando rate original (probablemente expirado):', err);
     }
 
-    // 6. Si falló el rate original, hacer re-cotización
+    // ── CAMINO B: intentar con el rate original ───────────────────────────────
     if (!transaction) {
-      // Parsear la dirección guardada en shippingAddress
+      try {
+        const t = await shippo.transactions.create({
+          rate: order.shippoRateId,
+          labelFileType: LabelFileTypeEnum.Pdf,
+          async: false,
+        });
+        if (t.status === 'SUCCESS') {
+          transaction = t;
+        } else {
+          const msgs = (t.messages ?? []).map((m) => m.text).filter(Boolean).join(' | ');
+          console.error(`[generate-label] order=${orderId} — rate original ERROR: ${msgs || 'sin detalle'}`);
+        }
+      } catch (err) {
+        console.error(
+          `[generate-label] order=${orderId} — excepción con rate original (probablemente expirado):`,
+          err
+        );
+      }
+    }
+
+    // ── CAMINO C: re-cotización con 3 niveles de fallback ────────────────────
+    if (!transaction) {
       let addressParsed: {
         line1?: string;
         city?: string;
@@ -106,10 +151,7 @@ export async function POST(
 
       if (!addressParsed.line1 || !addressParsed.city || !addressParsed.state || !addressParsed.postal_code) {
         return NextResponse.json(
-          {
-            error:
-              'La dirección del pedido está incompleta. No se puede re-cotizar automáticamente.',
-          },
+          { error: 'La dirección del pedido está incompleta. No se puede re-cotizar automáticamente.' },
           { status: 422 }
         );
       }
@@ -129,8 +171,8 @@ export async function POST(
       }
       if (pesoTotal === 0) pesoTotal = 0.5;
 
-      // Crear nuevo shipment para re-cotizar
-      let newRateId: string | null = null;
+      let availableRates: Awaited<ReturnType<typeof shippo.shipments.create>>['rates'] = [];
+
       try {
         const shipment = await shippo.shipments.create({
           addressFrom: ADDRESS_FROM,
@@ -155,41 +197,44 @@ export async function POST(
           async: false,
         });
 
-        // Extraer el nombre del servicio original (la parte después de " — ")
-        const shippingMethodParts = (order.shippingMethod ?? '').split(' — ');
-        const originalServiceName = (
-          shippingMethodParts.length > 1
-            ? shippingMethodParts.slice(1).join(' — ').trim()
-            : order.shippingMethod ?? ''
-        ).toLowerCase();
-
-        // Buscar rate que coincida con el servicio original (case-insensitive)
-        const matchingRate = (shipment.rates ?? []).find(
-          (r) => (r.servicelevel.name ?? '').toLowerCase() === originalServiceName
-        );
-
-        if (!matchingRate?.objectId) {
-          return NextResponse.json(
-            {
-              error: `El servicio '${order.shippingMethod}' ya no está disponible para esta ruta. Por favor, genera el label manualmente en el panel de Shippo o elige un servicio alternativo.`,
-            },
-            { status: 422 }
-          );
-        }
-
-        newRateId = matchingRate.objectId;
+        availableRates = shipment.rates ?? [];
       } catch (err) {
-        console.error('[generate-label] Error re-cotizando con Shippo:', err);
+        console.error(`[generate-label] order=${orderId} — error re-cotizando con Shippo:`, err);
         return NextResponse.json(
           { error: 'Error al re-cotizar tarifas de envío con Shippo.' },
           { status: 502 }
         );
       }
 
-      // Comprar label con el nuevo rate
-      try {
+      if (availableRates.length === 0) {
+        return NextResponse.json(
+          { error: 'Shippo no devolvió tarifas disponibles para esta dirección.' },
+          { status: 422 }
+        );
+      }
+
+      // Extraer nombre del servicio original (la parte después de " — ")
+      const shippingMethodParts = (order.shippingMethod ?? '').split(' — ');
+      const originalServiceName = (
+        shippingMethodParts.length > 1
+          ? shippingMethodParts.slice(1).join(' — ').trim()
+          : order.shippingMethod ?? ''
+      ).toLowerCase();
+
+      const originalPrice = parseFloat(order.shippingCost.toString());
+
+      // ── Nivel 1: match exacto por nombre de servicio ──────────────────────
+      const nameMatch = availableRates.find(
+        (r) => (r.servicelevel.name ?? '').toLowerCase() === originalServiceName
+      );
+
+      if (nameMatch?.objectId) {
+        console.log(
+          `[generate-label] order=${orderId} — FALLBACK nivel 1 (match por nombre): ` +
+          `${nameMatch.provider} ${nameMatch.servicelevel.name} $${nameMatch.amount}`
+        );
         const t = await shippo.transactions.create({
-          rate: newRateId,
+          rate: nameMatch.objectId,
           labelFileType: LabelFileTypeEnum.Pdf,
           async: false,
         });
@@ -197,24 +242,82 @@ export async function POST(
           transaction = t;
         } else {
           const msgs = (t.messages ?? []).map((m) => m.text).filter(Boolean).join(' | ');
-          console.error(`[generate-label] Rate re-cotizado ERROR — ${msgs || 'sin detalle'}`);
+          console.error(`[generate-label] order=${orderId} — rate nivel 1 ERROR: ${msgs}`);
           return NextResponse.json(
-            {
-              error: `Shippo rechazó el label${msgs ? `: ${msgs}` : '. Revisa el panel de Shippo.'}`,
-            },
+            { error: `Shippo rechazó el label${msgs ? `: ${msgs}` : '. Revisa el panel de Shippo.'}` },
             { status: 502 }
           );
         }
-      } catch (err) {
-        console.error('[generate-label] Error comprando label re-cotizado:', err);
-        return NextResponse.json(
-          { error: 'Error al comprar el label de envío con Shippo.' },
-          { status: 502 }
-        );
+      }
+
+      // ── Nivel 2: rate con precio más cercano al original ──────────────────
+      if (!transaction) {
+        const ratesWithId = availableRates.filter((r) => r.objectId);
+        const closestRate = ratesWithId.reduce<typeof ratesWithId[0] | null>((best, r) => {
+          if (!best) return r;
+          const diffCurrent = Math.abs(parseFloat(r.amount) - originalPrice);
+          const diffBest = Math.abs(parseFloat(best.amount) - originalPrice);
+          return diffCurrent < diffBest ? r : best;
+        }, null);
+
+        if (closestRate) {
+          const closestPrice = parseFloat(closestRate.amount);
+          const diffRatio = originalPrice > 0
+            ? Math.abs(closestPrice - originalPrice) / originalPrice
+            : 1;
+
+          if (diffRatio <= MAX_PRICE_DIFF_RATIO) {
+            // Dentro del 30% → auto-seleccionar
+            console.log(
+              `[generate-label] order=${orderId} — FALLBACK nivel 2 (match por precio): ` +
+              `${closestRate.provider} ${closestRate.servicelevel.name} $${closestRate.amount} ` +
+              `(original $${originalPrice}, diff ${(diffRatio * 100).toFixed(1)}%)`
+            );
+            const t = await shippo.transactions.create({
+              rate: closestRate.objectId!,
+              labelFileType: LabelFileTypeEnum.Pdf,
+              async: false,
+            });
+            if (t.status === 'SUCCESS') {
+              transaction = t;
+            } else {
+              const msgs = (t.messages ?? []).map((m) => m.text).filter(Boolean).join(' | ');
+              console.error(`[generate-label] order=${orderId} — rate nivel 2 ERROR: ${msgs}`);
+              return NextResponse.json(
+                { error: `Shippo rechazó el label${msgs ? `: ${msgs}` : '. Revisa el panel de Shippo.'}` },
+                { status: 502 }
+              );
+            }
+          } else {
+            // ── Nivel 3: diferencia >30% → requiere selección manual ─────────
+            console.log(
+              `[generate-label] order=${orderId} — FALLBACK nivel 3 (selección manual requerida): ` +
+              `precio original $${originalPrice}, rate más cercano $${closestPrice} ` +
+              `(diff ${(diffRatio * 100).toFixed(1)}% > ${MAX_PRICE_DIFF_RATIO * 100}%)`
+            );
+
+            const ratesForFrontend = ratesWithId.map((r) => ({
+              rateId: r.objectId!,
+              carrier: r.provider ?? 'Desconocido',
+              service: r.servicelevel.name ?? 'Servicio desconocido',
+              amount: parseFloat(r.amount),
+              days: r.estimatedDays ?? null,
+            }));
+            // Ordenar por precio ascendente
+            ratesForFrontend.sort((a, b) => a.amount - b.amount);
+
+            return NextResponse.json({
+              requires_manual_selection: true,
+              original_service: order.shippingMethod,
+              original_price: originalPrice,
+              rates: ratesForFrontend,
+            });
+          }
+        }
       }
     }
 
-    // Seguridad extra: si transaction sigue siendo null aquí, algo inesperado pasó
+    // Seguridad: si transaction es null aquí, algo inesperado pasó
     if (!transaction) {
       return NextResponse.json(
         { error: 'No se pudo obtener un label de Shippo. Intenta de nuevo.' },
@@ -222,7 +325,7 @@ export async function POST(
       );
     }
 
-    // 7. Actualizar el Order con los datos del label
+    // 5. Actualizar el Order con los datos del label
     const trackingNumber = transaction.trackingNumber ?? null;
     const trackingUrl = transaction.trackingUrlProvider ?? null;
     const labelUrl = transaction.labelUrl ?? null;
@@ -239,7 +342,6 @@ export async function POST(
 
     return NextResponse.json({ trackingNumber, trackingUrl, labelUrl });
   } catch (err) {
-    // Captura cualquier excepción no manejada y retorna JSON en lugar de HTML 500
     console.error('[generate-label] Error no manejado:', err);
     const message = err instanceof Error ? err.message : 'Error interno del servidor';
     return NextResponse.json({ error: message }, { status: 500 });
