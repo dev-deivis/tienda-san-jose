@@ -133,6 +133,8 @@ export default function AdminOrdenesPage() {
   const [labelError, setLabelError] = useState<{ id: number; msg: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [manualSelection, setManualSelection] = useState<ManualSelectionState | null>(null);
+  const [pendingCancel, setPendingCancel] = useState<number | null>(null);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -168,10 +170,39 @@ export default function AdminOrdenesPage() {
         setOrders((prev) =>
           prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
         );
+        return true;
+      } else {
+        const data = await res.json() as { error?: string };
+        if (data.error === 'STRIPE_REFUND_FAILED') {
+          setCancelError('El reembolso de Stripe falló. El pedido NO fue cancelado. Inténtalo de nuevo o maneja el reembolso manualmente en el dashboard de Stripe.');
+        } else if (data.error === 'LABEL_EXISTS') {
+          setCancelError('No se puede cancelar: ya se generó la guía de envío para este pedido.');
+        } else {
+          setCancelError('Error al actualizar el pedido. Inténtalo de nuevo.');
+        }
+        return false;
       }
+    } catch {
+      setCancelError('Error de conexión al actualizar el pedido.');
+      return false;
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  const handleStatusChange = (orderId: number, newStatus: string) => {
+    if (newStatus === 'cancelled') {
+      setCancelError(null);
+      setPendingCancel(orderId);
+    } else {
+      changeStatus(orderId, newStatus);
+    }
+  };
+
+  const confirmCancel = async () => {
+    if (pendingCancel === null) return;
+    const ok = await changeStatus(pendingCancel, 'cancelled');
+    if (ok) setPendingCancel(null);
   };
 
   const applyLabelResult = (
@@ -197,16 +228,13 @@ export default function AdminOrdenesPage() {
         body: JSON.stringify(rateId ? { rateId } : {}),
       });
       const data = await res.json() as {
-        // éxito
         labelUrl?: string;
         trackingNumber?: string | null;
         trackingUrl?: string | null;
-        // selección manual requerida
         requires_manual_selection?: boolean;
         original_service?: string | null;
         original_price?: number;
         rates?: ManualRate[];
-        // error
         error?: string;
       };
 
@@ -216,7 +244,6 @@ export default function AdminOrdenesPage() {
       }
 
       if (data.requires_manual_selection && data.rates) {
-        // El rate expiró y la diferencia de precio es >30% — pedir al admin que elija
         setManualSelection({
           orderId,
           originalService: data.original_service ?? null,
@@ -352,13 +379,23 @@ export default function AdminOrdenesPage() {
                     <td className="px-4 py-3">
                       <select
                         value={order.status}
-                        disabled={updatingId === order.id}
-                        onChange={(e) => changeStatus(order.id, e.target.value)}
+                        disabled={updatingId === order.id || order.status === 'cancelled'}
+                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
                         className="text-sm border border-gray-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-purple/40 focus:border-brand-purple disabled:opacity-50 cursor-pointer"
                       >
                         {NEXT_STATUSES.map((s) => (
-                          <option key={s} value={s}>
+                          <option
+                            key={s}
+                            value={s}
+                            disabled={
+                              s === 'cancelled' &&
+                              !!(order.labelUrl || order.trackingNumber)
+                            }
+                          >
                             {STATUS_LABEL[s] ?? s}
+                            {s === 'cancelled' && (order.labelUrl || order.trackingNumber)
+                              ? ' (guía generada)'
+                              : ''}
                           </option>
                         ))}
                       </select>
@@ -367,7 +404,9 @@ export default function AdminOrdenesPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {order.labelUrl ? (
+                      {order.status === 'cancelled' ? (
+                        <span className="text-xs text-gray-400 italic">Cancelado</span>
+                      ) : order.labelUrl ? (
                         <div className="flex flex-col gap-1">
                           <a
                             href={order.labelUrl}
@@ -411,6 +450,51 @@ export default function AdminOrdenesPage() {
       <p className="text-xs text-gray-400 text-right">
         Mostrando {filtered.length} de {orders.length} pedidos
       </p>
+
+      {/* Modal de confirmación de cancelación */}
+      {pendingCancel !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+            <div className="flex items-start justify-between mb-3">
+              <h3 className="font-semibold text-gray-800 text-base">
+                ¿Cancelar pedido #{pendingCancel}?
+              </h3>
+              <button
+                onClick={() => { setPendingCancel(null); setCancelError(null); }}
+                disabled={updatingId === pendingCancel}
+                className="text-gray-400 hover:text-gray-600 ml-3 mt-0.5"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Se emitirá un reembolso automático al cliente y se restaurará el stock.
+              Esta acción no se puede deshacer.
+            </p>
+            {cancelError && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5 mb-4">
+                {cancelError}
+              </p>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setPendingCancel(null); setCancelError(null); }}
+                disabled={updatingId === pendingCancel}
+                className="flex-1 py-2.5 border border-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-60"
+              >
+                No, mantener
+              </button>
+              <button
+                onClick={confirmCancel}
+                disabled={updatingId === pendingCancel}
+                className="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 transition-colors disabled:opacity-60"
+              >
+                {updatingId === pendingCancel ? 'Cancelando…' : 'Sí, cancelar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de selección manual de rate */}
       {manualSelection && (

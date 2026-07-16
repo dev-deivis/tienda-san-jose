@@ -5,6 +5,7 @@ import { Package } from 'lucide-react';
 import { getSessionUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getDictionary, isValidLocale } from '@/app/[locale]/dictionaries';
+import { CancelOrderButton } from '@/components/orders/cancel-order-button';
 
 export async function generateMetadata({
   params,
@@ -54,6 +55,11 @@ export default async function MisPedidosPage({
   const dict = await getDictionary(locale);
   const od = dict.orders;
   const st = dict.status as Record<string, string>;
+
+  const CANCELLABLE_STATUSES = ['pending', 'processing'];
+  function isCancellable(order: { status: string; labelUrl: string | null; trackingNumber: string | null }) {
+    return CANCELLABLE_STATUSES.includes(order.status) && !order.labelUrl && !order.trackingNumber;
+  }
 
   const orders = await prisma.order.findMany({
     where: { userId: session.userId },
@@ -187,7 +193,7 @@ export default async function MisPedidosPage({
                   </div>
                 </div>
 
-                {/* Tracking + Ver detalle */}
+                {/* Tracking + Ver detalle + Cancelar */}
                 <div className="px-6 py-4 flex items-center justify-between border-t border-gray-100">
                   <div className="text-sm">
                     {order.trackingNumber ? (
@@ -213,12 +219,17 @@ export default async function MisPedidosPage({
                       <span className="text-gray-400 italic">{od.preparing}</span>
                     )}
                   </div>
-                  <Link
-                    href={`/${locale}/mis-pedidos/${order.id}`}
-                    className="text-sm font-semibold text-brand-purple hover:text-brand-purple-dark transition-colors"
-                  >
-                    {od.viewDetail}
-                  </Link>
+                  <div className="flex items-center gap-4">
+                    {isCancellable(order) && (
+                      <CancelOrderButton orderId={order.id} dict={od} />
+                    )}
+                    <Link
+                      href={`/${locale}/mis-pedidos/${order.id}`}
+                      className="text-sm font-semibold text-brand-purple hover:text-brand-purple-dark transition-colors"
+                    >
+                      {od.viewDetail}
+                    </Link>
+                  </div>
                 </div>
               </div>
             );

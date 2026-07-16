@@ -216,7 +216,15 @@
     "trackingSection": "Seguimiento",
     "trackingLabel": "Ver etiqueta",
     "productsSection": "Productos",
-    "total": "Total"
+    "total": "Total",
+    "cancelOrder": "Cancelar pedido",
+    "cancelConfirmTitle": "¿Cancelar este pedido?",
+    "cancelConfirmDesc": "Se emitirá un reembolso automático a tu método de pago. Esta acción no se puede deshacer.",
+    "cancelConfirmButton": "Sí, cancelar",
+    "cancelDismiss": "No, mantener",
+    "cancelRefundFailed": "El reembolso no pudo procesarse en este momento. Por favor inténtalo de nuevo o contáctanos.",
+    "cancelErrorGeneric": "No se pudo cancelar el pedido. Inténtalo de nuevo.",
+    "cancelling": "Cancelando..."
   },
   "status": {
     "pending": "Pendiente",

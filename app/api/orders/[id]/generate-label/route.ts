@@ -61,7 +61,22 @@ export async function POST(
       return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 });
     }
 
-    // 4. Verificar que tenga shippoRateId
+    // 4a. Bloquear si el pedido ya está cancelado, enviado o entregado.
+    //     Solo 'pending' y 'processing' son estados válidos para generar una guía.
+    const LABEL_ALLOWED_STATUSES = ['pending', 'processing'];
+    if (!LABEL_ALLOWED_STATUSES.includes(order.status)) {
+      const reason =
+        order.status === 'cancelled'
+          ? 'El pedido está cancelado y fue reembolsado. No se puede generar una guía.'
+          : order.status === 'shipped'
+            ? 'El pedido ya tiene una guía generada.'
+            : order.status === 'delivered'
+              ? 'El pedido ya fue entregado.'
+              : `El pedido tiene un estado que no permite generar guías (${order.status}).`;
+      return NextResponse.json({ error: reason, code: 'ORDER_NOT_LABELABLE' }, { status: 400 });
+    }
+
+    // 4b. Verificar que tenga shippoRateId
     if (!order.shippoRateId) {
       return NextResponse.json(
         {

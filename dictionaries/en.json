@@ -216,7 +216,15 @@
     "trackingSection": "Tracking",
     "trackingLabel": "View label",
     "productsSection": "Products",
-    "total": "Total"
+    "total": "Total",
+    "cancelOrder": "Cancel order",
+    "cancelConfirmTitle": "Cancel this order?",
+    "cancelConfirmDesc": "A refund will be automatically issued to your payment method. This action cannot be undone.",
+    "cancelConfirmButton": "Yes, cancel",
+    "cancelDismiss": "No, keep it",
+    "cancelRefundFailed": "The refund could not be processed at this time. Please try again or contact us.",
+    "cancelErrorGeneric": "Could not cancel the order. Please try again.",
+    "cancelling": "Cancelling..."
   },
   "status": {
     "pending": "Pending",

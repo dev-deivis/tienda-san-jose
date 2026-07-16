@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getDictionary, isValidLocale } from '@/app/[locale]/dictionaries';
+import { CancelOrderButton } from '@/components/orders/cancel-order-button';
 
 type Props = { params: Promise<{ locale: string; id: string }> };
 
@@ -89,6 +90,12 @@ export default async function DetallePedidoPage({ params }: Props) {
 
   const address = parseShippingAddress(order.shippingAddress);
 
+  const CANCELLABLE_STATUSES = ['pending', 'processing'];
+  const canCancel =
+    CANCELLABLE_STATUSES.includes(order.status) &&
+    !order.labelUrl &&
+    !order.trackingNumber;
+
   const subtotal = order.items.reduce((acc, item) => {
     return acc + parseFloat(item.precioUnitario.toString()) * item.cantidad;
   }, 0);
@@ -129,11 +136,16 @@ export default async function DetallePedidoPage({ params }: Props) {
                 </p>
               )}
             </div>
-            <span
-              className={`self-start sm:self-auto text-xs font-semibold px-3 py-1 rounded-full ${getStatusClasses(order.status)}`}
-            >
-              {st[order.status] ?? order.status}
-            </span>
+            <div className="flex flex-col items-start sm:items-end gap-2">
+              <span
+                className={`text-xs font-semibold px-3 py-1 rounded-full ${getStatusClasses(order.status)}`}
+              >
+                {st[order.status] ?? order.status}
+              </span>
+              {canCancel && (
+                <CancelOrderButton orderId={order.id} dict={od} />
+              )}
+            </div>
           </div>
 
           {/* Dirección de envío */}
