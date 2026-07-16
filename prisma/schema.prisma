@@ -15,10 +15,29 @@ model User {
   email     String     @unique
   password  String
   nombre    String?
+  phone     String?
   role      Role       @default(CUSTOMER)
   createdAt DateTime   @default(now())
   orders    Order[]
   cartItems CartItem[]
+  addresses Address[]
+}
+
+model Address {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nombre       String
+  apellido     String
+  telefono     String
+  direccion1   String
+  direccion2   String?
+  ciudad       String
+  estado       String
+  codigoPostal String
+  pais         String   @default("US")
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
 }
 
 enum Role {

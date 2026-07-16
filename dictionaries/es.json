@@ -280,6 +280,58 @@
     "emptyDesc": "No hay resultados para \"{query}\". Intenta con otro término.",
     "viewAll2": "Ver todos los productos"
   },
+  "account": {
+    "hub": {
+      "title": "Mi Cuenta",
+      "subtitle": "Gestiona tu información y preferencias",
+      "profileTitle": "Perfil",
+      "profileDesc": "Nombre y teléfono",
+      "addressesTitle": "Direcciones",
+      "addressesDesc": "Libreta de direcciones de envío",
+      "passwordTitle": "Cambiar contraseña",
+      "passwordDesc": "Actualiza tu contraseña de acceso",
+      "ordersTitle": "Mis pedidos",
+      "ordersDesc": "Historial de compras"
+    },
+    "profile": {
+      "title": "Mi Perfil",
+      "subtitle": "Actualiza tu información personal",
+      "fullName": "Nombre completo",
+      "fullNamePlaceholder": "María González",
+      "phone": "Teléfono",
+      "phonePlaceholder": "(239) 555-0100",
+      "emailLabel": "Correo electrónico",
+      "emailReadonlyNote": "El email no se puede cambiar directamente. Contáctanos si necesitas actualizarlo.",
+      "saveButton": "Guardar cambios",
+      "saving": "Guardando...",
+      "saveSuccess": "¡Cambios guardados correctamente!",
+      "saveError": "Error al guardar los cambios. Intenta de nuevo.",
+      "back": "← Mi Cuenta"
+    },
+    "addresses": {
+      "title": "Libreta de Direcciones",
+      "subtitle": "Administra tus direcciones de envío guardadas",
+      "addButton": "Agregar dirección",
+      "empty": "No tienes direcciones guardadas.",
+      "emptyDesc": "Agrega una dirección para agilizar tus próximas compras.",
+      "defaultBadge": "Predeterminada",
+      "setDefault": "Establecer como predeterminada",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "deleteTitle": "¿Eliminar esta dirección?",
+      "deleteDesc": "Esta acción no se puede deshacer.",
+      "deleteButton": "Sí, eliminar",
+      "cancelButton": "Cancelar",
+      "addTitle": "Nueva dirección",
+      "editTitle": "Editar dirección",
+      "saveButton": "Guardar dirección",
+      "saving": "Guardando...",
+      "back": "← Mi Cuenta",
+      "errorGeneric": "Error al guardar la dirección. Intenta de nuevo.",
+      "errorDelete": "Error al eliminar la dirección. Intenta de nuevo.",
+      "errorSetDefault": "Error al actualizar la dirección. Intenta de nuevo."
+    }
+  },
   "changePassword": {
     "title": "Cambiar contraseña",
     "subtitle": "Actualiza tu contraseña de acceso",

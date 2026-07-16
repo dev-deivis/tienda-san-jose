@@ -280,6 +280,58 @@
     "emptyDesc": "No results for \"{query}\". Try a different term.",
     "viewAll2": "View all products"
   },
+  "account": {
+    "hub": {
+      "title": "My Account",
+      "subtitle": "Manage your information and preferences",
+      "profileTitle": "Profile",
+      "profileDesc": "Name and phone number",
+      "addressesTitle": "Addresses",
+      "addressesDesc": "Shipping address book",
+      "passwordTitle": "Change password",
+      "passwordDesc": "Update your account password",
+      "ordersTitle": "My orders",
+      "ordersDesc": "Purchase history"
+    },
+    "profile": {
+      "title": "My Profile",
+      "subtitle": "Update your personal information",
+      "fullName": "Full name",
+      "fullNamePlaceholder": "Maria González",
+      "phone": "Phone",
+      "phonePlaceholder": "(239) 555-0100",
+      "emailLabel": "Email address",
+      "emailReadonlyNote": "Email cannot be changed directly. Contact us if you need to update it.",
+      "saveButton": "Save changes",
+      "saving": "Saving...",
+      "saveSuccess": "Changes saved successfully!",
+      "saveError": "Error saving changes. Please try again.",
+      "back": "← My Account"
+    },
+    "addresses": {
+      "title": "Address Book",
+      "subtitle": "Manage your saved shipping addresses",
+      "addButton": "Add address",
+      "empty": "You have no saved addresses.",
+      "emptyDesc": "Add an address to speed up your future purchases.",
+      "defaultBadge": "Default",
+      "setDefault": "Set as default",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteTitle": "Delete this address?",
+      "deleteDesc": "This action cannot be undone.",
+      "deleteButton": "Yes, delete",
+      "cancelButton": "Cancel",
+      "addTitle": "New address",
+      "editTitle": "Edit address",
+      "saveButton": "Save address",
+      "saving": "Saving...",
+      "back": "← My Account",
+      "errorGeneric": "Error saving address. Please try again.",
+      "errorDelete": "Error deleting address. Please try again.",
+      "errorSetDefault": "Error updating address. Please try again."
+    }
+  },
   "changePassword": {
     "title": "Change password",
     "subtitle": "Update your account password",
