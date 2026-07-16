@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ShoppingCart, ImageIcon } from 'lucide-react';
+import { useCart } from '@/context/cart-context';
 
 type Product = {
   id: number;
@@ -17,11 +18,25 @@ type Props = {
 };
 
 export function ProductCard({ product, addToCartLabel }: Props) {
+  const { addItem } = useCart();
+
   const precio = typeof product.precio === 'object'
     ? parseFloat(product.precio.toString())
     : Number(product.precio);
 
   const imgSrc = product.images?.[0]?.url ?? product.imagen ?? null;
+
+  function handleAddToCart(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    addItem({
+      productId: product.id,
+      nombre: product.nombre,
+      precio,
+      imagen: imgSrc ?? `https://placehold.co/400x400/3D1560/FDF8F3?text=TSJ`,
+      variante: undefined,
+    });
+  }
 
   return (
     <Link href={`/producto/${product.id}`} className="group block">
@@ -44,7 +59,7 @@ export function ProductCard({ product, addToCartLabel }: Props) {
 
         {/* Botón carrito rápido */}
         <button
-          onClick={(e) => e.preventDefault()}
+          onClick={handleAddToCart}
           className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-brand-purple hover:text-white text-gray-600"
           aria-label={addToCartLabel}
         >
