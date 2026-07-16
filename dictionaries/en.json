@@ -271,5 +271,24 @@
     "emptyTitle": "No products found",
     "emptyDesc": "No results for \"{query}\". Try a different term.",
     "viewAll2": "View all products"
+  },
+  "changePassword": {
+    "title": "Change password",
+    "subtitle": "Update your account password",
+    "currentPassword": "Current password",
+    "currentPasswordPlaceholder": "Your current password",
+    "newPassword": "New password",
+    "newPasswordPlaceholder": "At least 6 characters",
+    "confirmNewPassword": "Confirm new password",
+    "confirmNewPasswordPlaceholder": "Repeat your new password",
+    "submitButton": "Change password",
+    "submitting": "Changing...",
+    "successTitle": "Password updated!",
+    "successDesc": "Your password was changed successfully. You can continue using the store normally.",
+    "errorWrongPassword": "The current password is incorrect",
+    "errorMismatch": "New passwords do not match",
+    "errorTooShort": "New password must be at least 6 characters",
+    "errorGeneric": "An error occurred while changing the password. Please try again.",
+    "errorUnauthorized": "You must be logged in to change your password"
   }
 }

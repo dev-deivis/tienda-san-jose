@@ -167,13 +167,14 @@ export function Header({
                       <Package size={15} />
                       {dict.myOrders}
                     </Link>
-                    <button
-                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-brand-purple transition-colors text-left"
-                      onClick={() => { setDropdownOpen(false); }}
+                    <Link
+                      href={`/${locale}/cuenta/cambiar-contrasena`}
+                      onClick={() => setDropdownOpen(false)}
+                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-brand-purple transition-colors"
                     >
                       <UserCircle size={15} />
                       {dict.myAccount}
-                    </button>
+                    </Link>
                     <button
                       onClick={() => { setDropdownOpen(false); logout(); }}
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-red-50 hover:text-red-500 transition-colors text-left"
