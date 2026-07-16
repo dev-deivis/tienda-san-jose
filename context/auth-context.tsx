@@ -6,6 +6,7 @@ export type CurrentUser = {
   id: number;
   email: string;
   nombre: string | null;
+  phone: string | null;
   role: 'CUSTOMER' | 'STAFF' | 'ADMIN';
   createdAt: string;
 };

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingCart, Package, LogOut, Store } from 'lucide-react';
+import { ShoppingCart, Package, LogOut, Store, UserCircle } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 
 const navLinks = [
@@ -46,10 +46,21 @@ export default function StaffShell({ children }: { children: React.ReactNode }) 
         </nav>
 
         {/* Footer del sidebar */}
-        <div className="px-3 py-4 border-t border-white/10">
+        <div className="px-3 py-4 border-t border-white/10 space-y-1">
+          <Link
+            href="/staff/cuenta"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+              pathname === '/staff/cuenta'
+                ? 'bg-brand-purple-dark border-l-2 border-brand-magenta pl-[10px]'
+                : 'hover:bg-white/10'
+            }`}
+          >
+            <UserCircle size={18} />
+            Mi cuenta
+          </Link>
           <Link
             href="/staff"
-            className={`flex items-center gap-3 px-3 py-2 rounded-md text-xs text-white/60 hover:text-white/90 hover:bg-white/10 transition-colors mb-1 ${
+            className={`flex items-center gap-3 px-3 py-2 rounded-md text-xs text-white/60 hover:text-white/90 hover:bg-white/10 transition-colors ${
               pathname === '/staff' ? 'bg-brand-purple-dark border-l-2 border-brand-magenta pl-[10px]' : ''
             }`}
           >

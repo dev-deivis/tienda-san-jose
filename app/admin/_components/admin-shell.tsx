@@ -11,6 +11,7 @@ import {
   Users,
   LogOut,
   Store,
+  UserCircle,
 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 
@@ -59,8 +60,19 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         </nav>
 
         {/* Footer del sidebar */}
-        <div className="px-3 py-4 border-t border-white/10">
-          <p className="px-3 py-1 text-xs text-white/40 uppercase tracking-wider mb-1">
+        <div className="px-3 py-4 border-t border-white/10 space-y-1">
+          <Link
+            href="/admin/cuenta"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
+              pathname === '/admin/cuenta'
+                ? 'bg-brand-purple-dark border-l-2 border-brand-magenta pl-[10px]'
+                : 'hover:bg-white/10'
+            }`}
+          >
+            <UserCircle size={18} />
+            Mi cuenta
+          </Link>
+          <p className="px-3 py-1 text-xs text-white/40 truncate">
             {user?.email}
           </p>
         </div>
