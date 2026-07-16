@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ShoppingCart, MapPin, Check } from 'lucide-react';
 import { useCart } from '@/context/cart-context';
+import type { Dictionary } from '@/app/[locale]/dictionaries';
 
 type Props = {
   product: {
@@ -14,9 +15,11 @@ type Props = {
     attributes: Record<string, string> | null;
     imagen: string | null;
   };
+  dict: Dictionary['product'];
+  attrLabels: Dictionary['attrLabels'];
 };
 
-export function ProductPurchasePanel({ product }: Props) {
+export function ProductPurchasePanel({ product, dict, attrLabels }: Props) {
   const [cantidad, setCantidad] = useState(1);
   const [added, setAdded] = useState(false);
   const { addItem } = useCart();
@@ -57,29 +60,22 @@ export function ProductPurchasePanel({ product }: Props) {
 
       {Object.entries(attrs).length > 0 && (
         <div className="flex flex-col gap-3">
-          {Object.entries(attrs).map(([key, val]) => {
-            const label: Record<string, string> = {
-              material: 'Material', edicion: 'Edición', tapa: 'Tapa',
-              talla: 'Talla', color: 'Color', ocasion: 'Ocasión',
-              duracion: 'Duración', peso: 'Peso',
-            };
-            return (
-              <div key={key}>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
-                  {label[key] ?? key}
-                </p>
-                <span className="inline-block px-4 py-1.5 rounded-full bg-brand-purple/10 text-brand-purple text-sm font-medium border border-brand-purple/20">
-                  {val}
-                </span>
-              </div>
-            );
-          })}
+          {Object.entries(attrs).map(([key, val]) => (
+            <div key={key}>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">
+                {attrLabels[key as keyof typeof attrLabels] ?? key}
+              </p>
+              <span className="inline-block px-4 py-1.5 rounded-full bg-brand-purple/10 text-brand-purple text-sm font-medium border border-brand-purple/20">
+                {val}
+              </span>
+            </div>
+          ))}
         </div>
       )}
 
       <div>
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-          Cantidad
+          {dict.quantity}
         </p>
         <div className="flex items-center gap-3">
           <button
@@ -95,7 +91,9 @@ export function ProductPurchasePanel({ product }: Props) {
           >
             +
           </button>
-          <span className="text-xs text-gray-400 ml-1">{product.stock} disponibles</span>
+          <span className="text-xs text-gray-400 ml-1">
+            {dict.stock.replace('{count}', String(product.stock))}
+          </span>
         </div>
       </div>
 
@@ -108,15 +106,15 @@ export function ProductPurchasePanel({ product }: Props) {
         }`}
       >
         {added ? (
-          <><Check size={20} /> ¡Agregado al carrito!</>
+          <><Check size={20} /> {dict.added}</>
         ) : (
-          <><ShoppingCart size={20} /> Agregar al carrito</>
+          <><ShoppingCart size={20} /> {dict.addToCart}</>
         )}
       </button>
 
       <p className="flex items-center gap-1.5 text-xs text-gray-400">
         <MapPin size={13} className="text-brand-gold" />
-        Envíos desde Bonita Springs, FL
+        {dict.shippingFrom}
       </p>
     </div>
   );

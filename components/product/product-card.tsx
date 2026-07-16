@@ -11,7 +11,12 @@ type Product = {
   images?: { url: string }[];
 };
 
-export function ProductCard({ product }: { product: Product }) {
+type Props = {
+  product: Product;
+  addToCartLabel: string;
+};
+
+export function ProductCard({ product, addToCartLabel }: Props) {
   const precio = typeof product.precio === 'object'
     ? parseFloat(product.precio.toString())
     : Number(product.precio);
@@ -41,7 +46,7 @@ export function ProductCard({ product }: { product: Product }) {
         <button
           onClick={(e) => e.preventDefault()}
           className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-brand-purple hover:text-white text-gray-600"
-          aria-label="Agregar al carrito"
+          aria-label={addToCartLabel}
         >
           <ShoppingCart size={16} />
         </button>

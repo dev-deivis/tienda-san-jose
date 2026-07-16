@@ -1,24 +1,15 @@
 import { Truck, HeartHandshake, Users } from 'lucide-react';
+import type { Dictionary } from '@/app/[locale]/dictionaries';
 
-const badges = [
-  {
-    icon: Truck,
-    title: 'Envío seguro a todo EE.UU.',
-    desc: 'Cada pedido empacado con cuidado y enviado de forma segura a cualquier estado.',
-  },
-  {
-    icon: HeartHandshake,
-    title: 'Piezas bendecidas antes de enviar',
-    desc: 'Cada artículo recibe una bendición especial antes de llegar a tus manos.',
-  },
-  {
-    icon: Users,
-    title: 'Atención familiar y personalizada',
-    desc: 'Somos una familia que atiende a tu familia. Escríbenos sin compromiso.',
-  },
-];
+type Props = { dict: Dictionary['trust'] };
 
-export function TrustBadges() {
+export function TrustBadges({ dict }: Props) {
+  const badges = [
+    { icon: Truck,          title: dict.shippingTitle, desc: dict.shippingDesc },
+    { icon: HeartHandshake, title: dict.blessedTitle,  desc: dict.blessedDesc  },
+    { icon: Users,          title: dict.careTitle,     desc: dict.careDesc     },
+  ];
+
   return (
     <section className="bg-white py-14 px-4">
       <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-10">

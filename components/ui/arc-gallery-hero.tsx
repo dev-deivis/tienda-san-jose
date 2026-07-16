@@ -3,9 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import type { Dictionary } from '@/app/[locale]/dictionaries';
 
 type ArcGalleryHeroProps = {
   images: string[];
+  dict: Dictionary['hero'];
+  logoAlt: string;
   startAngle?: number;
   endAngle?: number;
   radiusLg?: number;
@@ -19,6 +22,8 @@ type ArcGalleryHeroProps = {
 
 export const ArcGalleryHero: React.FC<ArcGalleryHeroProps> = ({
   images,
+  dict,
+  logoAlt,
   startAngle = 20,
   endAngle = 160,
   radiusLg = 480,
@@ -111,7 +116,7 @@ export const ArcGalleryHero: React.FC<ArcGalleryHeroProps> = ({
           <div className="flex justify-center mb-4">
             <Image
               src="/logo.png"
-              alt="Logo Tienda San José"
+              alt={logoAlt}
               width={580}
               height={580}
               className="object-contain drop-shadow-md"
@@ -119,24 +124,23 @@ export const ArcGalleryHero: React.FC<ArcGalleryHeroProps> = ({
             />
           </div>
           <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-brand-purple">
-            Bendiciones en cada detalle
+            {dict.tagline}
           </h1>
           <p className="mt-4 text-lg text-gray-600 leading-relaxed">
-            Tu tienda de confianza en Bonita Springs, Florida, para artículos religiosos que celebran
-            la fe y la familia. Descubre nuestra cuidada selección de piezas con significado profundo.
+            {dict.description}
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/categoria/articulos-religiosos"
               className="w-full sm:w-auto px-7 py-3 rounded-full bg-brand-purple text-white hover:bg-brand-purple-dark transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium"
             >
-              Explorar Catálogo
+              {dict.exploreCta}
             </Link>
             <Link
               href="/nosotros"
               className="w-full sm:w-auto px-7 py-3 rounded-full border-2 border-brand-gold text-brand-purple hover:bg-brand-gold/10 transition-all duration-200 font-medium"
             >
-              Nuestra Historia
+              {dict.historyCta}
             </Link>
           </div>
         </div>

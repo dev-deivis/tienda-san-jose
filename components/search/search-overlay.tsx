@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { Search, X, ImageIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import type { Dictionary } from '@/app/[locale]/dictionaries';
 
 type SearchProduct = {
   id: number;
@@ -13,9 +14,14 @@ type SearchProduct = {
   images: { url: string }[];
 };
 
+type Props = {
+  navDict: Dictionary['nav'];
+  searchDict: Dictionary['search'];
+};
+
 const DEBOUNCE_MS = 300;
 
-export function SearchOverlay() {
+export function SearchOverlay({ navDict, searchDict }: Props) {
   // show: controla si el DOM del overlay está montado
   // animate: controla las clases CSS de transición (siempre sigue a show con ~10ms de delay)
   const [show, setShow] = useState(false);
@@ -137,7 +143,7 @@ export function SearchOverlay() {
       <button
         onClick={open}
         className="p-2 text-gray-600 hover:text-brand-purple transition-colors"
-        aria-label="Buscar productos"
+        aria-label={navDict.searchLabel}
       >
         <Search size={20} />
       </button>
@@ -169,7 +175,7 @@ export function SearchOverlay() {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar productos…"
+                placeholder={navDict.searchPlaceholder}
                 className="flex-1 px-4 py-4 text-base text-gray-800 placeholder-gray-400 focus:outline-none bg-transparent"
               />
               {loading && (
@@ -178,7 +184,7 @@ export function SearchOverlay() {
               <button
                 onClick={close}
                 className="mr-3 p-1.5 text-gray-400 hover:text-gray-700 transition-colors shrink-0"
-                aria-label="Cerrar búsqueda"
+                aria-label={navDict.closeSearch}
               >
                 <X size={18} />
               </button>
@@ -189,8 +195,7 @@ export function SearchOverlay() {
               <div className="mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
                 {results.length === 0 ? (
                   <p className="px-5 py-6 text-sm text-gray-500 text-center">
-                    No se encontraron productos para{' '}
-                    <span className="font-medium text-gray-700">&ldquo;{query.trim()}&rdquo;</span>.
+                    {searchDict.noResults.replace('{query}', query.trim())}
                   </p>
                 ) : (
                   <>
@@ -241,7 +246,7 @@ export function SearchOverlay() {
                         onClick={handleVerTodos}
                         className="text-sm text-brand-purple hover:text-brand-purple-dark font-medium transition-colors"
                       >
-                        Ver todos los resultados para &ldquo;{query.trim()}&rdquo; →
+                        {searchDict.viewAll.replace('{query}', query.trim())}
                       </button>
                     </div>
                   </>

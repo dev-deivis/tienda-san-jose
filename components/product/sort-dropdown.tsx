@@ -2,19 +2,24 @@
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { ArrowUpDown } from 'lucide-react';
+import type { Dictionary } from '@/app/[locale]/dictionaries';
 
-const SORT_OPTIONS = [
-  { value: 'destacados', label: 'Destacados' },
-  { value: 'precio-asc', label: 'Precio: menor a mayor' },
-  { value: 'precio-desc', label: 'Precio: mayor a menor' },
-  { value: 'nombre-asc', label: 'Nombre: A-Z' },
-];
+type Props = {
+  dict: Dictionary['sort'];
+};
 
-export function SortDropdown() {
+export function SortDropdown({ dict }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const current = searchParams.get('sort') ?? 'destacados';
+
+  const sortOptions = [
+    { value: 'destacados', label: dict.featured },
+    { value: 'precio-asc', label: dict.priceAsc },
+    { value: 'precio-desc', label: dict.priceDesc },
+    { value: 'nombre-asc', label: dict.nameAsc },
+  ];
 
   function handleChange(value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -32,7 +37,7 @@ export function SortDropdown() {
         onChange={(e) => handleChange(e.target.value)}
         className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-brand-purple/30 text-gray-700 cursor-pointer"
       >
-        {SORT_OPTIONS.map((opt) => (
+        {sortOptions.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
           </option>

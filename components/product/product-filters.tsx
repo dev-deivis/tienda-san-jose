@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
+import type { Dictionary } from '@/app/[locale]/dictionaries';
 
 type FilterAttribute = {
   key: string;
@@ -13,9 +14,10 @@ type FilterAttribute = {
 type Props = {
   filterAttributes: FilterAttribute[];
   maxProductPrice: number;
+  dict: Dictionary['filters'];
 };
 
-export function ProductFilters({ filterAttributes, maxProductPrice }: Props) {
+export function ProductFilters({ filterAttributes, maxProductPrice, dict }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -77,22 +79,22 @@ export function ProductFilters({ filterAttributes, maxProductPrice }: Props) {
       <div className="flex items-center justify-between mb-5">
         <h2 className="font-semibold text-gray-900 flex items-center gap-2">
           <SlidersHorizontal size={18} className="text-brand-gold" />
-          Filtros
+          {dict.title}
         </h2>
         {hasActiveFilters && (
           <button onClick={clearAll} className="text-xs text-brand-magenta hover:underline">
-            Limpiar todo
+            {dict.clearAll}
           </button>
         )}
       </div>
 
       {/* Rango de precio */}
       <div className="mb-6 pb-6 border-b border-gray-100">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">Rango de precio</h3>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">{dict.priceRange}</h3>
         <div className="flex gap-2 items-center">
           <input
             type="number"
-            placeholder="Mín"
+            placeholder={dict.min}
             value={precioMin}
             onChange={(e) => setPrecioMin(e.target.value)}
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple/30"
@@ -100,7 +102,7 @@ export function ProductFilters({ filterAttributes, maxProductPrice }: Props) {
           <span className="text-gray-400 text-sm">—</span>
           <input
             type="number"
-            placeholder="Máx"
+            placeholder={dict.max}
             value={precioMax}
             onChange={(e) => setPrecioMax(e.target.value)}
             className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-purple/30"
@@ -110,7 +112,7 @@ export function ProductFilters({ filterAttributes, maxProductPrice }: Props) {
           onClick={applyPriceFilter}
           className="mt-3 w-full py-2 rounded-lg bg-brand-purple text-white text-sm font-medium hover:bg-brand-purple-dark transition-colors"
         >
-          Aplicar
+          {dict.apply}
         </button>
       </div>
 

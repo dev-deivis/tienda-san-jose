@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Dictionary } from '@/app/[locale]/dictionaries';
 
 type Category = {
   id: number;
@@ -17,16 +18,20 @@ const FALLBACK_COLORS = [
   '#6B5B7B',
 ];
 
-export function ColeccionesSagradas({ categories }: { categories: Category[] }) {
+type Props = {
+  categories: Category[];
+  dict: Dictionary['collections'];
+};
+
+export function ColeccionesSagradas({ categories, dict }: Props) {
   return (
     <section className="bg-cream py-16 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Encabezado */}
         <div className="text-center mb-12">
-          <h2 className="font-serif text-4xl font-bold text-brand-purple">Colecciones Sagradas</h2>
+          <h2 className="font-serif text-4xl font-bold text-brand-purple">{dict.title}</h2>
           <p className="mt-3 text-gray-500 max-w-xl mx-auto text-base leading-relaxed">
-            Encuentra inspiración y devoción en nuestras categorías principales, curadas con
-            reverencia y atención al detalle.
+            {dict.description}
           </p>
         </div>
 

@@ -10,15 +10,18 @@ import {
 } from '@stripe/react-stripe-js';
 import { getStripe } from '@/lib/stripe-client';
 import { type ShippingFormData } from '@/components/checkout/shipping-form';
+import type { Dictionary } from '@/app/[locale]/dictionaries';
 
 // ---------------------------------------------------------------------------
 // Formulario interno — solo se monta dentro del provider <Elements>
 // ---------------------------------------------------------------------------
 function PaymentForm({
   shippingData,
+  dict,
 }: {
   clientSecret: string;
   shippingData: ShippingFormData;
+  dict: Dictionary['payment'];
 }) {
   const stripe = useStripe();
   const elements = useElements();
@@ -56,7 +59,7 @@ function PaymentForm({
 
     // Si no hay error Stripe redirige automáticamente al return_url
     if (error) {
-      setErrorMsg(error.message ?? 'Error al procesar el pago.');
+      setErrorMsg(error.message ?? dict.genericError);
       setIsLoading(false);
     }
   };
@@ -74,7 +77,7 @@ function PaymentForm({
         disabled={isLoading || !stripe || !elements}
         className="w-full py-3 bg-brand-purple text-white rounded-xl font-semibold hover:bg-brand-purple-dark transition-colors disabled:opacity-50"
       >
-        {isLoading ? 'Procesando\u2026' : 'Confirmar pago'}
+        {isLoading ? dict.processing : dict.confirmButton}
       </button>
     </form>
   );
@@ -89,12 +92,14 @@ export function PaymentSection({
   shippingMethod,
   shippoRateId,
   onTaxCalculated,
+  dict,
 }: {
   shippingData: ShippingFormData;
   shippingCost: number;
   shippingMethod: string;
   shippoRateId: string;
   onTaxCalculated: (taxAmount: number) => void;
+  dict: Dictionary['payment'];
 }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -134,19 +139,19 @@ export function PaymentSection({
           setClientSecret(data.clientSecret);
           onTaxCalculated(data.taxAmountCents / 100);
         } else {
-          setError(data.error ?? 'No se pudo inicializar el pago.');
+          setError(data.error ?? dict.initError);
         }
         setLoading(false);
       })
       .catch(() => {
-        setError('Error de conexion al inicializar el pago.');
+        setError(dict.connectionError);
         setLoading(false);
       });
   }, [shippingCost, shippingMethod, shippoRateId, shippingData.ciudad, shippingData.estado, shippingData.codigoPostal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm">
-      <h2 className="font-serif text-xl font-bold text-gray-900 mb-4">Pago</h2>
+      <h2 className="font-serif text-xl font-bold text-gray-900 mb-4">{dict.title}</h2>
 
       {loading && (
         <div className="flex justify-center py-8">
@@ -157,13 +162,13 @@ export function PaymentSection({
       {isUnauth && (
         <div className="text-center py-6">
           <p className="text-gray-600 text-sm mb-3">
-            Debes iniciar sesion para completar tu compra.
+            {dict.notAuthError}
           </p>
           <Link
             href="/login"
             className="inline-block px-5 py-2.5 bg-brand-purple text-white rounded-xl font-semibold hover:bg-brand-purple-dark transition-colors text-sm"
           >
-            Iniciar sesion
+            {dict.loginButton}
           </Link>
         </div>
       )}
@@ -180,12 +185,12 @@ export function PaymentSection({
           stripe={getStripe()}
           options={{ clientSecret, appearance: { theme: 'stripe' } }}
         >
-          <PaymentForm clientSecret={clientSecret} shippingData={shippingData} />
+          <PaymentForm clientSecret={clientSecret} shippingData={shippingData} dict={dict} />
         </Elements>
       )}
 
       <p className="mt-4 text-xs text-gray-400 text-center">
-        Tus datos de pago se procesan de forma segura a traves de Stripe.
+        {dict.secureNote}
       </p>
     </div>
   );

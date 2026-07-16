@@ -6,12 +6,25 @@ import { useState, useRef, useEffect } from 'react';
 import { useCart } from '@/context/cart-context';
 import { useAuth } from '@/context/auth-context';
 import { SearchOverlay } from '@/components/search/search-overlay';
+import { LanguageSwitcher } from '@/components/layout/language-switcher';
+import type { Dictionary } from '@/app/[locale]/dictionaries';
+import type { Locale } from '@/i18n/routing';
 
 type Category = { id: number; nombre: string; slug: string };
 
-const NAV_LIMIT = 5;
+const NAV_LIMIT = 4;
 
-export function Header({ categories }: { categories: Category[] }) {
+export function Header({
+  categories,
+  dict,
+  searchDict,
+  locale,
+}: {
+  categories: Category[];
+  dict: Dictionary['nav'];
+  searchDict: Dictionary['search'];
+  locale: Locale;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -40,7 +53,8 @@ export function Header({ categories }: { categories: Category[] }) {
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16 sm:h-20">
+
           {/* Logo */}
           <Link
             href="/"
@@ -49,15 +63,15 @@ export function Header({ categories }: { categories: Category[] }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/logo.png"
-              alt="Logo Tienda San José"
-              className="w-20 h-20 object-contain"
+              alt={dict.logoAlt}
+              className="w-14 h-14 sm:w-20 sm:h-20 object-contain"
             />
-            <span className="font-serif text-xl font-bold text-brand-purple whitespace-nowrap">
-              Tienda San José
+            <span className="font-serif text-base sm:text-xl font-bold text-brand-purple whitespace-nowrap">
+              {dict.brandName}
             </span>
           </Link>
 
-          {/* Navegación desktop */}
+          {/* Navegación desktop — gap-6 (probado y seguro a 1024px+) */}
           <nav className="hidden lg:flex items-center gap-6">
             {visibleCats.map((cat) => (
               <Link
@@ -76,7 +90,7 @@ export function Header({ categories }: { categories: Category[] }) {
                   onClick={() => setMoreOpen((prev) => !prev)}
                   className="flex items-center gap-1 text-sm text-gray-600 hover:text-brand-purple transition-colors whitespace-nowrap"
                 >
-                  Más
+                  {dict.more}
                   <ChevronDown
                     size={14}
                     className={`transition-transform duration-200 ${moreOpen ? 'rotate-180' : ''}`}
@@ -101,13 +115,22 @@ export function Header({ categories }: { categories: Category[] }) {
             )}
           </nav>
 
-          {/* Iconos + hamburguesa */}
-          <div className="flex items-center gap-3">
-            <SearchOverlay />
+          {/* Iconos + hamburguesa
+              • LanguageSwitcher: hidden en mobile → aparece en menú hamburguesa */}
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            <SearchOverlay navDict={dict} searchDict={searchDict} />
+
+            {/* Selector de idioma SOLO en desktop, con separadores visuales */}
+            <span className="hidden lg:block w-px h-5 bg-gray-200" aria-hidden="true" />
+            <div className="hidden lg:flex">
+              <LanguageSwitcher locale={locale} />
+            </div>
+            <span className="hidden lg:block w-px h-5 bg-gray-200" aria-hidden="true" />
+
             <Link
               href="/carrito"
               className="relative p-2 text-gray-600 hover:text-brand-purple transition-colors"
-              aria-label="Carrito de compras"
+              aria-label={dict.cartLabel}
             >
               <ShoppingCart size={20} />
               {getItemCount() > 0 && (
@@ -116,13 +139,14 @@ export function Header({ categories }: { categories: Category[] }) {
                 </span>
               )}
             </Link>
+
             {/* Ícono de usuario: link a /login si no hay sesión, dropdown si sí */}
             {user ? (
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen((prev) => !prev)}
                   className="p-2 text-brand-purple hover:text-brand-purple-dark transition-colors"
-                  aria-label="Mi cuenta"
+                  aria-label={dict.myAccount}
                 >
                   <User size={20} />
                 </button>
@@ -130,7 +154,7 @@ export function Header({ categories }: { categories: Category[] }) {
                 {dropdownOpen && (
                   <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
                     <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-xs text-gray-400">Conectado como</p>
+                      <p className="text-xs text-gray-400">{dict.loggedInAs}</p>
                       <p className="text-sm font-medium text-gray-800 truncate">
                         {user.nombre ?? user.email}
                       </p>
@@ -141,21 +165,21 @@ export function Header({ categories }: { categories: Category[] }) {
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-brand-purple transition-colors"
                     >
                       <Package size={15} />
-                      Mis pedidos
+                      {dict.myOrders}
                     </Link>
                     <button
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-brand-purple transition-colors text-left"
                       onClick={() => { setDropdownOpen(false); }}
                     >
                       <UserCircle size={15} />
-                      Mi cuenta
+                      {dict.myAccount}
                     </button>
                     <button
                       onClick={() => { setDropdownOpen(false); logout(); }}
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-red-50 hover:text-red-500 transition-colors text-left"
                     >
                       <LogOut size={15} />
-                      Cerrar sesión
+                      {dict.logout}
                     </button>
                   </div>
                 )}
@@ -164,15 +188,17 @@ export function Header({ categories }: { categories: Category[] }) {
               <Link
                 href="/login"
                 className="p-2 text-gray-600 hover:text-brand-purple transition-colors"
-                aria-label="Iniciar sesión"
+                aria-label={dict.loginLabel}
               >
                 <User size={20} />
               </Link>
             )}
+
+            {/* Hamburguesa — solo en mobile/tablet */}
             <button
               className="lg:hidden p-2 text-gray-600 hover:text-brand-purple transition-colors"
               onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Menú"
+              aria-label={dict.menuLabel}
             >
               {menuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
@@ -193,6 +219,14 @@ export function Header({ categories }: { categories: Category[] }) {
               {cat.nombre}
             </Link>
           ))}
+
+          {/* Selector de idioma al final del menú móvil */}
+          <div className="border-t border-gray-100 pt-3 mt-1 flex items-center gap-1">
+            <span className="text-xs text-gray-400 mr-2">
+              {locale === 'es' ? 'Idioma' : 'Language'}:
+            </span>
+            <LanguageSwitcher locale={locale} />
+          </div>
         </div>
       )}
     </header>
