@@ -83,6 +83,14 @@ function PaymentForm({
   );
 }
 
+// Forma del item que devuelve el endpoint cuando hay STOCK_INSUFICIENTE
+export type StockErrorItem = {
+  productId: number;
+  nombre: string;
+  disponible: number;
+  solicitado: number;
+};
+
 // ---------------------------------------------------------------------------
 // Componente principal exportado
 // ---------------------------------------------------------------------------
@@ -92,6 +100,7 @@ export function PaymentSection({
   shippingMethod,
   shippoRateId,
   onTaxCalculated,
+  onStockError,
   dict,
 }: {
   shippingData: ShippingFormData;
@@ -99,6 +108,7 @@ export function PaymentSection({
   shippingMethod: string;
   shippoRateId: string;
   onTaxCalculated: (taxAmount: number) => void;
+  onStockError: (items: StockErrorItem[]) => void;
   dict: Dictionary['payment'];
 }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -131,6 +141,16 @@ export function PaymentSection({
       .then(async (r) => {
         if (r.status === 401) {
           setIsUnauth(true);
+          setLoading(false);
+          return;
+        }
+        if (r.status === 409) {
+          const data = await r.json() as { error: string; items?: StockErrorItem[] };
+          if (data.error === 'STOCK_INSUFICIENTE' && data.items?.length) {
+            onStockError(data.items);
+          } else {
+            setError(data.error ?? dict.initError);
+          }
           setLoading(false);
           return;
         }

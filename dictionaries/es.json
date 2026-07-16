@@ -149,7 +149,9 @@
     "continueShopping": "Seguir comprando",
     "errorTitle": "Pago no procesado",
     "errorDesc": "El pago no pudo completarse. Puedes volver al checkout e intentarlo de nuevo.",
-    "backToCheckout": "Volver al checkout"
+    "backToCheckout": "Volver al checkout",
+    "stockTitle": "Stock insuficiente en tu carrito",
+    "stockItemLine": "{nombre}: solo {disponible} disponible(s), pediste {solicitado}"
   },
   "shipping": {
     "formTitle": "Información de envío",

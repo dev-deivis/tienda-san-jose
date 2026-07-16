@@ -7,6 +7,21 @@ export type CreateOrderResult =
   | { created: false; orderId: number }
   | { created: false; orderId: null; reason: string };
 
+/** Error interno lanzado cuando un producto no tiene stock suficiente.
+ *  Al lanzarse dentro de la $transaction, Prisma hace rollback automático
+ *  (ningún cambio de stock ni la orden quedan en la BD). */
+class StockInsuficienteError extends Error {
+  constructor(
+    public readonly productId: number,
+    public readonly productName: string,
+    public readonly stockDisponible: number,
+    public readonly cantidadSolicitada: number,
+  ) {
+    super(`Stock insuficiente para producto #${productId}`);
+    this.name = 'StockInsuficienteError';
+  }
+}
+
 /**
  * Crea un Order a partir de un PaymentIntent de Stripe.
  *
@@ -14,9 +29,10 @@ export type CreateOrderResult =
  * (detectado por `shippingAddress CONTAINS pi.id`), retorna el existente
  * sin crear duplicados.
  *
- * La verificación y creación ocurren dentro de una transacción para
- * reducir la ventana de condición de carrera entre el webhook y el
- * fallback de la página de confirmación.
+ * La verificación, el decremento de stock y la creación del Order ocurren
+ * dentro de una sola $transaction — si cualquier producto no tiene stock
+ * suficiente, toda la transacción hace rollback y se emite un reembolso
+ * automático en Stripe para no cobrarle al cliente.
  *
  * Usado por:
  *  - /app/api/webhooks/stripe/route.ts  (camino principal)
@@ -47,7 +63,9 @@ export async function createOrderFromPaymentIntent(
   const taxCalculationId = pi.metadata.taxCalculationId || null;
   const subtotal = items.reduce((sum, i) => sum + i.precio * i.cantidad, 0);
   const total = subtotal + shippingCost + taxAmount;
-  const addressData = customerAddressRaw ? (JSON.parse(customerAddressRaw) as Record<string, unknown>) : {};
+  const addressData = customerAddressRaw
+    ? (JSON.parse(customerAddressRaw) as Record<string, unknown>)
+    : {};
 
   // Registrar Tax Transaction en Stripe (para reportes de impuestos)
   if (taxCalculationId) {
@@ -62,49 +80,129 @@ export async function createOrderFromPaymentIntent(
     }
   }
 
-  // Transacción: verificar idempotencia + crear Order de forma atómica
-  const result = await prisma.$transaction(async (tx) => {
-    const existing = await tx.order.findFirst({
-      where: { shippingAddress: { contains: pi.id } },
-      select: { id: true },
-    });
+  // ─── Transacción principal ────────────────────────────────────────────────
+  // Dentro de esta transacción ocurren en orden:
+  //   1. Verificar idempotencia (evitar orden duplicada)
+  //   2. Decrementar stock de cada producto (con condición stock >= cantidad)
+  //   3. Crear el Order con sus OrderItems
+  //   4. Limpiar el carrito del usuario
+  //
+  // Si el paso 2 falla para cualquier producto, toda la transacción hace
+  // rollback: el stock queda intacto y la orden no se crea.
+  // ─────────────────────────────────────────────────────────────────────────
+  let result: CreateOrderResult;
 
-    if (existing) {
-      return { created: false as const, orderId: existing.id };
+  try {
+    result = await prisma.$transaction(async (tx) => {
+      // 1. Idempotencia: si ya existe una orden para este PaymentIntent, retornarla
+      const existing = await tx.order.findFirst({
+        where: { shippingAddress: { contains: pi.id } },
+        select: { id: true },
+      });
+      if (existing) {
+        return { created: false as const, orderId: existing.id };
+      }
+
+      // 2. Decrementar stock atómicamente.
+      //    updateMany con WHERE stock >= cantidad garantiza que la condición
+      //    se evalúa en la misma query SQL, sin ventana de race condition.
+      //    Si count === 0, el producto no tenía stock suficiente → rollback.
+      for (const item of items) {
+        const updated = await tx.product.updateMany({
+          where: { id: item.productId, stock: { gte: item.cantidad } },
+          data: { stock: { decrement: item.cantidad } },
+        });
+
+        if (updated.count === 0) {
+          // Leer el stock real para incluirlo en el mensaje de error
+          const product = await tx.product.findUnique({
+            where: { id: item.productId },
+            select: { nombre: true, stock: true },
+          });
+          throw new StockInsuficienteError(
+            item.productId,
+            product?.nombre ?? `producto #${item.productId}`,
+            product?.stock ?? 0,
+            item.cantidad,
+          );
+        }
+      }
+
+      // 3. Crear la orden
+      const order = await tx.order.create({
+        data: {
+          userId,
+          status: 'processing',
+          total,
+          shippingCost,
+          shippingMethod,
+          shippoRateId,
+          taxAmount,
+          shippingAddress: JSON.stringify({ paymentIntentId: pi.id, ...addressData }),
+          items: {
+            create: items.map((i) => ({
+              productId: i.productId,
+              cantidad: i.cantidad,
+              precioUnitario: i.precio,
+            })),
+          },
+        },
+        select: { id: true },
+      });
+
+      // 4. Limpiar el carrito del usuario en la BD
+      await tx.cartItem.deleteMany({ where: { userId } });
+
+      return { created: true as const, orderId: order.id };
+    });
+  } catch (err) {
+    if (err instanceof StockInsuficienteError) {
+      // La transacción ya hizo rollback — el stock quedó intacto, la orden no existe.
+      // Emitir reembolso automático para no dejar al cliente cobrado sin pedido.
+      // Es idempotente: verifica si ya existe un reembolso antes de crear otro.
+      try {
+        const existingRefunds = await stripe.refunds.list({
+          payment_intent: pi.id,
+          limit: 1,
+        });
+        if (existingRefunds.data.length === 0) {
+          await stripe.refunds.create({ payment_intent: pi.id });
+          console.warn(
+            `[create-order] Reembolso emitido — PI: ${pi.id} — "${err.productName}" ` +
+            `(disponible: ${err.stockDisponible}, solicitado: ${err.cantidadSolicitada})`
+          );
+        } else {
+          console.warn(
+            `[create-order] Reembolso ya existía para PI: ${pi.id} — no se duplicó`
+          );
+        }
+      } catch (refundErr) {
+        // El reembolso falló — se loguea como error crítico para revisión manual
+        console.error(
+          `[create-order] CRÍTICO: No se pudo emitir reembolso para PI ${pi.id}:`,
+          refundErr
+        );
+      }
+
+      return {
+        created: false,
+        orderId: null,
+        reason:
+          `Sin stock suficiente para "${err.productName}" ` +
+          `(disponible: ${err.stockDisponible}, solicitado: ${err.cantidadSolicitada})`,
+      };
     }
 
-    const order = await tx.order.create({
-      data: {
-        userId,
-        status: 'processing',
-        total,
-        shippingCost,
-        shippingMethod,
-        shippoRateId,
-        taxAmount,
-        shippingAddress: JSON.stringify({ paymentIntentId: pi.id, ...addressData }),
-        items: {
-          create: items.map((i) => ({
-            productId: i.productId,
-            cantidad: i.cantidad,
-            precioUnitario: i.precio,
-          })),
-        },
-      },
-      select: { id: true },
-    });
-
-    // Limpiar el carrito del usuario en la BD
-    await tx.cartItem.deleteMany({ where: { userId } });
-
-    return { created: true as const, orderId: order.id };
-  });
+    // Error inesperado — re-lanzar para que el webhook devuelva 500 a Stripe
+    // (Stripe reintentará el webhook más tarde)
+    throw err;
+  }
 
   if (result.created) {
     console.log(
       `[create-order] Order ${result.orderId} creado para usuario ${userId} (pi: ${pi.id})`
     );
-  } else {
+  } else if (result.orderId !== null) {
     console.log(
       `[create-order] Order ${result.orderId} ya existía para pi: ${pi.id} — sin duplicado`
     );

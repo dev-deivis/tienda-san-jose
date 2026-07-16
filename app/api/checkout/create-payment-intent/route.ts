@@ -35,12 +35,31 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'El carrito está vacío' }, { status: 400 });
   }
 
-  // 4. Calcular subtotal de productos en el servidor
+  // 4. Validar stock antes de crear el PaymentIntent
+  //    Si algún producto no tiene suficiente stock, devolvemos 409 con detalle
+  //    para que el frontend informe al cliente cuántas unidades quedan.
+  const sinStock = cartItems
+    .filter((item) => item.product.stock < item.cantidad)
+    .map((item) => ({
+      productId: item.productId,
+      nombre: item.product.nombre,
+      disponible: item.product.stock,
+      solicitado: item.cantidad,
+    }));
+
+  if (sinStock.length > 0) {
+    return NextResponse.json(
+      { error: 'STOCK_INSUFICIENTE', items: sinStock },
+      { status: 409 }
+    );
+  }
+
+  // 5. Calcular subtotal de productos en el servidor
   const total = cartItems.reduce((sum, item) => {
     return sum + item.cantidad * parseFloat(item.product.precio.toString());
   }, 0);
 
-  // 5. Calcular impuesto con Stripe Tax
+  // 6. Calcular impuesto con Stripe Tax
   let taxAmountCents = 0;
   let taxCalculationId: string | null = null;
 
@@ -83,7 +102,7 @@ export async function POST(req: NextRequest) {
     // Fallback: impuesto $0, no bloquear el checkout
   }
 
-  // 6. Total final = subtotal + envío + impuesto
+  // 7. Total final = subtotal + envío + impuesto
   const totalFinal = Math.round(total * 100) + shippingCostCents + taxAmountCents;
 
   if (totalFinal < 50) {
@@ -93,7 +112,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 7. Crear PaymentIntent en Stripe
+  // 8. Crear PaymentIntent en Stripe
   const paymentIntent = await stripe.paymentIntents.create({
     amount: totalFinal,
     currency: 'usd',

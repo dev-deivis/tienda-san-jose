@@ -9,7 +9,7 @@ import {
   type ShippingFormData,
   type ShippingFormErrors,
 } from '@/components/checkout/shipping-form';
-import { PaymentSection } from '@/components/checkout/payment-section';
+import { PaymentSection, type StockErrorItem } from '@/components/checkout/payment-section';
 import type { Dictionary } from '@/app/[locale]/dictionaries';
 
 const INITIAL_FORM: ShippingFormData = {
@@ -66,6 +66,7 @@ export function CheckoutClient({ checkoutDict, shippingDict, paymentDict }: Prop
   const [shippingFetched, setShippingFetched] = useState(false);
   const [taxAmount, setTaxAmount] = useState<number>(0);
   const [taxReady, setTaxReady] = useState(false);
+  const [stockError, setStockError] = useState<StockErrorItem[] | null>(null);
 
   // Esperar hidratacion del carrito antes de redirigir
   useEffect(() => {
@@ -91,6 +92,7 @@ export function CheckoutClient({ checkoutDict, shippingDict, paymentDict }: Prop
       setSelectedRate(null);
       setTaxAmount(0);
       setTaxReady(false);
+      setStockError(null);
     }
   }
 
@@ -201,7 +203,7 @@ export function CheckoutClient({ checkoutDict, shippingDict, paymentDict }: Prop
                         name="shipping-rate"
                         value={rate.id}
                         checked={selectedRate?.id === rate.id}
-                        onChange={() => { setSelectedRate(rate); setTaxReady(false); setTaxAmount(0); }}
+                        onChange={() => { setSelectedRate(rate); setTaxReady(false); setTaxAmount(0); setStockError(null); }}
                         className="text-brand-purple"
                       />
                       <div className="flex-1">
@@ -234,14 +236,49 @@ export function CheckoutClient({ checkoutDict, shippingDict, paymentDict }: Prop
               )}
             </div>
 
-            {/* Sección de pago — solo cuando hay un método de envío seleccionado */}
-            {selectedRate && (
+            {/* Banner de error de stock — aparece en lugar de la sección de pago */}
+            {stockError && (
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-red-200">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
+                    <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-lg font-bold text-gray-900 mb-1">
+                      {checkoutDict.stockTitle}
+                    </h3>
+                    <ul className="space-y-1">
+                      {stockError.map((item) => (
+                        <li key={item.productId} className="text-sm text-gray-600">
+                          {checkoutDict.stockItemLine
+                            .replace('{nombre}', item.nombre)
+                            .replace('{disponible}', String(item.disponible))
+                            .replace('{solicitado}', String(item.solicitado))}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                <Link
+                  href="/carrito"
+                  className="inline-flex items-center justify-center w-full py-3 bg-brand-purple text-white rounded-xl font-semibold hover:bg-brand-purple-dark transition-colors text-sm"
+                >
+                  {checkoutDict.backToCart}
+                </Link>
+              </div>
+            )}
+
+            {/* Sección de pago — solo cuando hay método de envío y no hay error de stock */}
+            {selectedRate && !stockError && (
               <PaymentSection
                 shippingData={formData}
                 shippingCost={selectedRate.precio}
                 shippingMethod={`${selectedRate.proveedor} — ${selectedRate.servicio}`}
                 shippoRateId={selectedRate.id}
                 onTaxCalculated={(amount) => { setTaxAmount(amount); setTaxReady(true); }}
+                onStockError={setStockError}
                 dict={paymentDict}
               />
             )}
