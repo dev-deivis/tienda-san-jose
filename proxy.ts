@@ -9,18 +9,24 @@ export function proxy(request: NextRequest) {
   const payload = token ? verifyToken(token) : null;
 
   // ── Auth: rutas protegidas ────────────────────────────────────────────────
+  // Determinar locale para los redirects de auth (cookie > Accept-Language)
+  const preferredCookie = request.cookies.get('preferred_locale')?.value ?? null;
+  const locale =
+    preferredCookie && isValidLocale(preferredCookie)
+      ? preferredCookie
+      : detectLocale(request.headers.get('accept-language'));
 
   // /admin/* → solo ADMIN
   if (pathname.startsWith('/admin')) {
     if (!payload || payload.role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
     }
   }
 
   // /staff/* → STAFF o ADMIN
   if (pathname.startsWith('/staff')) {
     if (!payload || (payload.role !== 'STAFF' && payload.role !== 'ADMIN')) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
     }
   }
 
@@ -29,12 +35,6 @@ export function proxy(request: NextRequest) {
   if (!pathname.startsWith('/admin') && !pathname.startsWith('/staff')) {
     const firstSegment = pathname.split('/')[1];
     if (!isValidLocale(firstSegment)) {
-      // Preferencia manual del usuario (cookie) tiene prioridad sobre Accept-Language
-      const preferredCookie = request.cookies.get('preferred_locale')?.value ?? null;
-      const locale =
-        preferredCookie && isValidLocale(preferredCookie)
-          ? preferredCookie
-          : detectLocale(request.headers.get('accept-language'));
       request.nextUrl.pathname = `/${locale}${pathname}`;
       return NextResponse.redirect(request.nextUrl);
     }
