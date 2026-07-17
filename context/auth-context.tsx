@@ -16,7 +16,13 @@ type AuthContextType = {
   loading: boolean;
   /** Actualiza el usuario en el contexto (usar tras login/registro exitoso). */
   setUser: (user: CurrentUser | null) => void;
-  logout: () => Promise<void>;
+  /**
+   * Borra la sesión y navega a `redirectTo`.
+   * Usa window.location.href (no reload) para evitar que Next.js App Router
+   * quede en RSC-mode y devuelva payload crudo en vez de HTML completo.
+   * Default: recarga la página actual (útil para clientes en páginas públicas).
+   */
+  logout: (redirectTo?: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -33,10 +39,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const logout = async () => {
+  const logout = async (redirectTo?: string) => {
     await fetch('/api/auth/logout', { method: 'POST' });
     setUser(null);
-    window.location.reload();
+    // Usamos href en vez de reload() para forzar una navegación HTTP limpia.
+    // reload() puede quedar en RSC-mode y devolver payload crudo en lugar de HTML.
+    window.location.href = redirectTo ?? window.location.pathname;
   };
 
   return (

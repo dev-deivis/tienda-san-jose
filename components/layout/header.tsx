@@ -176,7 +176,7 @@ export function Header({
                       {dict.myAccount}
                     </Link>
                     <button
-                      onClick={() => { setDropdownOpen(false); logout(); }}
+                      onClick={() => { setDropdownOpen(false); logout(`/${locale}/login`); }}
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-red-50 hover:text-red-500 transition-colors text-left"
                     >
                       <LogOut size={15} />
@@ -187,7 +187,7 @@ export function Header({
               </div>
             ) : (
               <Link
-                href="/login"
+                href={`/${locale}/login`}
                 className="p-2 text-gray-600 hover:text-brand-purple transition-colors"
                 aria-label={dict.loginLabel}
               >

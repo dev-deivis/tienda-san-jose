@@ -89,7 +89,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
             </span>
           </h1>
           <button
-            onClick={logout}
+            onClick={() => logout('/es/login')}
             className="flex items-center gap-2 text-sm text-gray-600 hover:text-brand-magenta transition-colors"
           >
             <LogOut size={16} />
