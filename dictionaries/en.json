@@ -29,8 +29,7 @@
       "contactUs": "Contact Us",
       "shippingReturns": "Shipping & Returns",
       "privacyPolicy": "Privacy Policy",
-      "ourMission": "Our Mission",
-      "wholesale": "Wholesale"
+      "ourMission": "Our Mission"
     }
   },
   "hero": {
@@ -411,5 +410,58 @@
     "errorTooShort": "New password must be at least 6 characters",
     "errorGeneric": "An error occurred while changing the password. Please try again.",
     "errorUnauthorized": "You must be logged in to change your password"
+  },
+  "footerPages": {
+    "contacto": {
+      "title": "Contact Us",
+      "metaTitle": "Contact Us — Tienda San José",
+      "metaDesc": "Have questions? Reach us by phone or email. We're here to help.",
+      "intro": "Do you have questions about an order, a product, or just want to say hello? We're here to serve you.",
+      "phoneLabel": "Phone",
+      "phone": "+1 (239) 494-0973",
+      "emailLabel": "Email",
+      "email": "tiendasanjose19@outlook.com",
+      "locationLabel": "Location",
+      "location": "Bonita Springs, Florida",
+      "responseTime": "We respond to emails and calls within 24 to 48 business hours."
+    },
+    "envios": {
+      "title": "Shipping & Returns",
+      "metaTitle": "Shipping & Returns — Tienda San José",
+      "metaDesc": "Learn about our shipping policy across the U.S. and returns within 14 days.",
+      "shippingTitle": "Shipping",
+      "shippingText": "We ship across the United States. Every order is carefully packed and, as part of our tradition, receives a special blessing before it leaves our hands and reaches yours.",
+      "returnsTitle": "Returns",
+      "returnsIntro": "We accept returns within the first 14 days after your order is received.",
+      "defectiveTitle": "Defective or damaged product",
+      "defectiveText": "We cover the return shipping cost, and you can choose between a refund to your original payment method or an exchange for another product.",
+      "changeOfMindTitle": "Change of mind",
+      "changeOfMindText": "Return shipping costs are your responsibility, and you may still choose between a refund or an exchange.",
+      "initiateReturn": "To start a return, email us at",
+      "withOrderNumber": "with your order number."
+    },
+    "privacidad": {
+      "title": "Privacy Policy",
+      "metaTitle": "Privacy Policy — Tienda San José",
+      "metaDesc": "Learn how Tienda San José collects, uses, and protects your personal information.",
+      "intro": "At Tienda San José we respect your privacy. This page explains what information we collect and how we use it.",
+      "dataTitle": "What information we collect",
+      "dataText": "Name, shipping address, email, and phone number — only to process and deliver your order.",
+      "paymentsTitle": "Payments",
+      "paymentsText": "Payments are securely processed through Stripe. We never store your card details on our servers.",
+      "useTitle": "Use of information",
+      "useText": "We use your data solely to manage your order, communicate with you about its status, and provide support. We do not sell or share your information with third parties for advertising purposes.",
+      "cookiesTitle": "Cookies",
+      "cookiesText": "We use cookies only for essential site functions, such as maintaining your session and the contents of your shopping cart.",
+      "contactLine": "If you have questions about this policy, email us at"
+    },
+    "mision": {
+      "title": "Love, faith, and hope",
+      "metaTitle": "Our Mission — Tienda San José",
+      "metaDesc": "Tienda San José was born to walk alongside families in life's most meaningful moments, with faith and devotion from Bonita Springs, FL.",
+      "paragraph1": "Tienda San José was born in Bonita Springs, Florida, with a simple purpose: to walk alongside families in life's most meaningful moments — a baptism, a first communion, a wedding, or simply the desire to have something that strengthens faith at home.",
+      "paragraph2": "We are a family serving your family. Every piece we ship passes through hands that choose it, care for it, and bless it before it reaches you.",
+      "closing": "Thank you for being part of this community of faith."
+    }
   }
 }

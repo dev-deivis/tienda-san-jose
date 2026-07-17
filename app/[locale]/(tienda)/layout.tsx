@@ -19,7 +19,7 @@ export default async function TiendaLayout({
     <>
       <HeaderServer dict={dict.nav} searchDict={dict.search} locale={locale} />
       <main>{children}</main>
-      <Footer dict={dict.footer} />
+      <Footer dict={dict.footer} locale={locale} />
     </>
   );
 }

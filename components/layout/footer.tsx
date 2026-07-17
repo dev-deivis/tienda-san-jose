@@ -1,15 +1,14 @@
 import Link from 'next/link';
 import type { Dictionary } from '@/app/[locale]/dictionaries';
 
-type Props = { dict: Dictionary['footer'] };
+type Props = { dict: Dictionary['footer']; locale: string };
 
-export function Footer({ dict }: Props) {
+export function Footer({ dict, locale }: Props) {
   const enlaces = [
-    { label: dict.links.contactUs, href: '/contacto' },
-    { label: dict.links.shippingReturns, href: '/envios' },
-    { label: dict.links.privacyPolicy, href: '/privacidad' },
-    { label: dict.links.ourMission, href: '/mision' },
-    { label: dict.links.wholesale, href: '/mayoreo' },
+    { label: dict.links.contactUs, href: `/${locale}/contacto` },
+    { label: dict.links.shippingReturns, href: `/${locale}/envios` },
+    { label: dict.links.privacyPolicy, href: `/${locale}/privacidad` },
+    { label: dict.links.ourMission, href: `/${locale}/mision` },
   ];
 
   return (

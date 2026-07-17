@@ -29,8 +29,7 @@
       "contactUs": "Contáctanos",
       "shippingReturns": "Envíos y Devoluciones",
       "privacyPolicy": "Política de Privacidad",
-      "ourMission": "Nuestra Misión",
-      "wholesale": "Mayoreo"
+      "ourMission": "Nuestra Misión"
     }
   },
   "hero": {
@@ -411,5 +410,58 @@
     "errorTooShort": "La nueva contraseña debe tener al menos 6 caracteres",
     "errorGeneric": "Ocurrió un error al cambiar la contraseña. Intenta de nuevo.",
     "errorUnauthorized": "Debes iniciar sesión para cambiar tu contraseña"
+  },
+  "footerPages": {
+    "contacto": {
+      "title": "Contáctanos",
+      "metaTitle": "Contáctanos — Tienda San José",
+      "metaDesc": "¿Tienes preguntas? Contáctanos por teléfono o correo electrónico. Estamos para servirte.",
+      "intro": "¿Tienes preguntas sobre un pedido, un producto, o simplemente quieres saludarnos? Estamos para servirte.",
+      "phoneLabel": "Teléfono",
+      "phone": "+1 (239) 494-0973",
+      "emailLabel": "Correo",
+      "email": "tiendasanjose19@outlook.com",
+      "locationLabel": "Ubicación",
+      "location": "Bonita Springs, Florida",
+      "responseTime": "Respondemos correos y llamadas en un plazo de 24 a 48 horas hábiles."
+    },
+    "envios": {
+      "title": "Envíos y Devoluciones",
+      "metaTitle": "Envíos y Devoluciones — Tienda San José",
+      "metaDesc": "Información sobre nuestras políticas de envío a todo EE.UU. y devoluciones dentro de 14 días.",
+      "shippingTitle": "Envíos",
+      "shippingText": "Enviamos a todo Estados Unidos. Cada pedido se empaca con cuidado y, como parte de nuestra tradición, recibe una bendición especial antes de salir de nuestras manos hacia las tuyas.",
+      "returnsTitle": "Devoluciones",
+      "returnsIntro": "Aceptamos devoluciones dentro de los primeros 14 días después de recibido tu pedido.",
+      "defectiveTitle": "Producto defectuoso o dañado",
+      "defectiveText": "Cubrimos el costo de envío de regreso, y puedes elegir entre un reembolso a tu método de pago original o un cambio por otro producto.",
+      "changeOfMindTitle": "Cambio de opinión",
+      "changeOfMindText": "El costo de envío de regreso corre por tu cuenta, y de igual forma puedes elegir entre reembolso o cambio.",
+      "initiateReturn": "Para iniciar una devolución, escríbenos a",
+      "withOrderNumber": "con tu número de pedido."
+    },
+    "privacidad": {
+      "title": "Política de Privacidad",
+      "metaTitle": "Política de Privacidad — Tienda San José",
+      "metaDesc": "Conoce cómo Tienda San José recopila, usa y protege tu información personal.",
+      "intro": "En Tienda San José respetamos tu privacidad. Esta página explica qué información recopilamos y cómo la usamos.",
+      "dataTitle": "Qué información recopilamos",
+      "dataText": "Nombre, dirección de envío, correo electrónico y teléfono, únicamente para procesar y entregar tu pedido.",
+      "paymentsTitle": "Pagos",
+      "paymentsText": "Los pagos se procesan de forma segura a través de Stripe. Nunca almacenamos los datos de tu tarjeta en nuestros servidores.",
+      "useTitle": "Uso de la información",
+      "useText": "Usamos tus datos únicamente para gestionar tu pedido, comunicarnos contigo sobre su estado, y brindarte soporte. No vendemos ni compartimos tu información con terceros para fines de publicidad.",
+      "cookiesTitle": "Cookies",
+      "cookiesText": "Usamos cookies únicamente para funciones esenciales del sitio, como mantener tu sesión y el contenido de tu carrito de compras.",
+      "contactLine": "Si tienes preguntas sobre esta política, escríbenos a"
+    },
+    "mision": {
+      "title": "Amor, fe y esperanza",
+      "metaTitle": "Nuestra Misión — Tienda San José",
+      "metaDesc": "Tienda San José nació para acompañar a las familias en los momentos que más importan, con fe y devoción desde Bonita Springs, FL.",
+      "paragraph1": "Tienda San José nació en Bonita Springs, Florida, con un propósito sencillo: acompañar a las familias en los momentos que más importan — un bautizo, una primera comunión, una boda, o simplemente el deseo de tener algo que fortalezca la fe en casa.",
+      "paragraph2": "Somos una familia que atiende a tu familia. Cada pieza que enviamos pasa por manos que la eligen, la cuidan y la bendicen antes de que llegue a ti.",
+      "closing": "Gracias por ser parte de esta comunidad de fe."
+    }
   }
 }
