@@ -16,17 +16,31 @@ export function proxy(request: NextRequest) {
       ? preferredCookie
       : detectLocale(request.headers.get('accept-language'));
 
+  // Detectar requests RSC del App Router cliente (Accept: text/x-component).
+  // Para esas requests, un HTTP redirect normal preserva los headers RSC → el
+  // destino devuelve RSC payload → el router no puede reconciliar layouts
+  // distintos (admin vs locale) → muestra payload crudo en el navegador.
+  // Fix: devolver Content-Type text/html (no-flight) → el router detecta
+  // !isFlightResponse y hace MPA navigation (full page reload sin RSC headers)
+  // → el proxy lo trata como carga normal → 307 → /es/login → HTML limpio.
+  const isRSC = (request.headers.get('accept') ?? '').includes('text/x-component');
+
+  const authRedirect = (url: string) =>
+    isRSC
+      ? new Response(null, { status: 200, headers: { 'Content-Type': 'text/html' } })
+      : NextResponse.redirect(new URL(url, request.url));
+
   // /admin/* → solo ADMIN
   if (pathname.startsWith('/admin')) {
     if (!payload || payload.role !== 'ADMIN') {
-      return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
+      return authRedirect(`/${locale}/login`);
     }
   }
 
   // /staff/* → STAFF o ADMIN
   if (pathname.startsWith('/staff')) {
     if (!payload || (payload.role !== 'STAFF' && payload.role !== 'ADMIN')) {
-      return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
+      return authRedirect(`/${locale}/login`);
     }
   }
 
