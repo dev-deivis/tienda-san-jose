@@ -3,6 +3,8 @@ import { ShoppingCart, Package } from 'lucide-react';
 import PedidoRow from './_components/pedido-row';
 import AgregarProductoForm from './_components/agregar-producto-form';
 
+export const dynamic = 'force-dynamic';
+
 export default async function StaffHomePage() {
   // Últimos 5 pedidos pendientes o en proceso
   const pedidosRecientes = await prisma.order.findMany({

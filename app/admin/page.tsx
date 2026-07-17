@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { DollarSign, ShoppingCart, TrendingUp, AlertTriangle } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminDashboardPage() {
   const now = new Date();
   const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1);

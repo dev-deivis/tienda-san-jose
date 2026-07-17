@@ -3,6 +3,8 @@ import Image from 'next/image';
 import { FolderTree } from 'lucide-react';
 import { CategoriaCardActions, NuevaCategoriaCard } from '@/app/admin/_components/categoria-modal';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminCategoriasPage() {
   const categorias = await prisma.category.findMany({
     include: { _count: { select: { products: true } } },

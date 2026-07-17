@@ -3,6 +3,8 @@ import { getSessionUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { AgregarStaffModal, EditStaffModal, DeleteStaffModal } from '@/app/admin/_components/staff-modals';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminStaffPage() {
   const session = await getSessionUser();
   if (!session || session.role !== 'ADMIN') {

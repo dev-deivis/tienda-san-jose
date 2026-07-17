@@ -5,6 +5,8 @@ import { PlusCircle } from 'lucide-react';
 import DeleteProductModal from '../_components/delete-product-modal';
 import EditProductModal from '../_components/edit-product-modal';
 
+export const dynamic = 'force-dynamic';
+
 export default async function StaffProductosPage() {
   const products = await prisma.product.findMany({
     include: {
