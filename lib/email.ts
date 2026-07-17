@@ -624,7 +624,64 @@ export async function sendLowStockAdminEmail(p: LowStockAdminParams): Promise<vo
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// 7. Pedido cancelado  →  admin
+// 7. Recuperación de contraseña  →  cliente
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface PasswordResetParams {
+  to: string;
+  resetUrl: string;
+}
+
+export async function sendPasswordResetEmail(p: PasswordResetParams): Promise<void> {
+  const body = `
+    <h2 style="margin:0 0 8px;font-family:Georgia,serif;color:#5B2E91;font-size:22px;">
+      Restablecer contraseña
+    </h2>
+    <p style="margin:0 0 20px;font-size:15px;color:#555555;">
+      Recibimos una solicitud para restablecer la contraseña de tu cuenta en
+      Tienda San José. Si no fuiste tú, puedes ignorar este correo.
+    </p>
+
+    <div style="text-align:center;margin:28px 0;">
+      <a href="${p.resetUrl}" target="_blank"
+         style="display:inline-block;padding:14px 36px;background:#5B2E91;
+                color:#FFFFFF;text-decoration:none;border-radius:8px;
+                font-size:15px;font-weight:bold;letter-spacing:0.3px;">
+        Restablecer mi contraseña
+      </a>
+    </div>
+
+    <p style="margin:0 0 8px;font-size:13px;color:#888;text-align:center;">
+      O copia y pega este link en tu navegador:
+    </p>
+    <p style="margin:0 0 24px;font-size:12px;color:#5B2E91;
+              text-align:center;word-break:break-all;">
+      ${p.resetUrl}
+    </p>
+
+    <div style="padding:14px 18px;background:#FFF8E8;border-radius:8px;
+                border-left:4px solid #C9A84C;">
+      <p style="margin:0;font-size:13px;color:#666;">
+        ⏱ Este link es válido por <strong>1 hora</strong> y solo puede usarse
+        una vez. Si ya expiró, solicita uno nuevo desde la página de inicio de sesión.
+      </p>
+    </div>`;
+
+  try {
+    await transporter.sendMail({
+      from: FROM,
+      to: p.to,
+      subject: '🔑 Restablecer contraseña — Tienda San José',
+      html: baseTemplate('Restablecer Contraseña', body),
+    });
+    console.log(`[email] Link de recuperación enviado a ${p.to}`);
+  } catch (err) {
+    console.error(`[email] Error al enviar link de recuperación a ${p.to}:`, err);
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// 8. Pedido cancelado  →  admin
 // ────────────────────────────────────────────────────────────────────────────
 
 export interface OrderCancelledAdminParams {

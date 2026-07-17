@@ -119,6 +119,15 @@ export function LoginClient({ dict, locale }: Props) {
           >
             {loading ? dict.loggingIn : dict.loginButton}
           </button>
+
+          <p className="text-center text-sm">
+            <Link
+              href={`/${locale}/recuperar-contrasena`}
+              className="text-brand-purple hover:underline"
+            >
+              {dict.forgotPassword}
+            </Link>
+          </p>
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-6">
