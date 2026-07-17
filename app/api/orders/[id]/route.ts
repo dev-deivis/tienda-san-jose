@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSessionUser } from '@/lib/auth';
 import { cancelOrderWithRefund } from '@/lib/cancel-order';
+import { sendOrderShippedEmail, sendOrderDeliveredEmail } from '@/lib/email';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -80,8 +81,28 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const order = await prisma.order.update({
     where: { id: Number(id) },
     data: { status: body.status },
-    include: { user: { select: { email: true } } },
+    include: {
+      user: { select: { email: true, nombre: true } },
+    },
   });
+
+  // ── Emails por cambio manual de estado (solo cuando el estado realmente cambia) ──
+  // Se guarda que currentOrder.status ya fue cargado arriba y no era 'cancelled'.
+  if (body.status === 'shipped' && currentOrder.status !== 'shipped') {
+    void sendOrderShippedEmail({
+      to: order.user.email,
+      customerName: order.user.nombre ?? null,
+      orderId: Number(id),
+      trackingNumber: order.trackingNumber,
+      trackingUrl: order.trackingUrl,
+    });
+  } else if (body.status === 'delivered' && currentOrder.status !== 'delivered') {
+    void sendOrderDeliveredEmail({
+      to: order.user.email,
+      customerName: order.user.nombre ?? null,
+      orderId: Number(id),
+    });
+  }
 
   return NextResponse.json({
     ...order,

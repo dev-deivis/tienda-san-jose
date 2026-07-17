@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Shippo } from 'shippo';
+import { sendOrderShippedEmail } from '@/lib/email';
 import { WeightUnitEnum } from 'shippo/models/components/weightunitenum.js';
 import { DistanceUnitEnum } from 'shippo/models/components/distanceunitenum.js';
 import { LabelFileTypeEnum } from 'shippo/models/components/labelfiletypeenum.js';
@@ -354,6 +355,27 @@ export async function POST(
         status: order.status === 'shipped' ? order.status : 'shipped',
       },
     });
+
+    // Notificar al cliente que su pedido fue enviado (fire-and-forget)
+    void (async () => {
+      try {
+        const user = await prisma.user.findUnique({
+          where: { id: order.userId },
+          select: { email: true, nombre: true },
+        });
+        if (user) {
+          await sendOrderShippedEmail({
+            to: user.email,
+            customerName: user.nombre ?? null,
+            orderId,
+            trackingNumber,
+            trackingUrl,
+          });
+        }
+      } catch (emailErr) {
+        console.error('[generate-label] Error al enviar email de envío:', emailErr);
+      }
+    })();
 
     return NextResponse.json({ trackingNumber, trackingUrl, labelUrl });
   } catch (err) {

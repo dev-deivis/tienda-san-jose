@@ -11,6 +11,10 @@
  */
 import { stripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
+import {
+  sendOrderCancellationEmail,
+  sendOrderCancelledAdminEmail,
+} from '@/lib/email';
 
 export type CancelResult =
   | { ok: true }
@@ -33,7 +37,9 @@ export async function cancelOrderWithRefund(orderId: number): Promise<CancelResu
       shippingAddress: true,
       labelUrl: true,
       trackingNumber: true,
+      total: true,
       items: { select: { productId: true, cantidad: true } },
+      user: { select: { email: true, nombre: true } },
     },
   });
 
@@ -89,6 +95,22 @@ export async function cancelOrderWithRefund(orderId: number): Promise<CancelResu
   console.log(
     `[cancel-order] Orden #${orderId} cancelada — stock restaurado (${order.items.length} producto(s))`
   );
+
+  // ── Emails de cancelación (fire-and-forget) ───────────────────────────────
+  // Ambas funciones manejan sus errores internamente — nunca bloquean el retorno.
+  const total = parseFloat(order.total.toString());
+  void sendOrderCancellationEmail({
+    to: order.user.email,
+    customerName: order.user.nombre ?? null,
+    orderId,
+    total,
+  });
+  void sendOrderCancelledAdminEmail({
+    orderId,
+    customerEmail: order.user.email,
+    customerName: order.user.nombre ?? null,
+    total,
+  });
 
   return { ok: true };
 }

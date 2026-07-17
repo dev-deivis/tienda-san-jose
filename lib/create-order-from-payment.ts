@@ -1,6 +1,12 @@
 import type Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { prisma } from '@/lib/prisma';
+import {
+  LOW_STOCK_THRESHOLD,
+  sendOrderConfirmationEmail,
+  sendNewOrderAdminEmail,
+  sendLowStockAdminEmail,
+} from '@/lib/email';
 
 export type CreateOrderResult =
   | { created: true; orderId: number }
@@ -202,6 +208,106 @@ export async function createOrderFromPaymentIntent(
     console.log(
       `[create-order] Order ${result.orderId} creado para usuario ${userId} (pi: ${pi.id})`
     );
+
+    // ── Emails post-compra (fire-and-forget) ─────────────────────────────────
+    // Los errores se manejan dentro de cada función de email — nunca bloquean
+    // ni lanzan excepciones que puedan afectar el flujo principal.
+    void (async () => {
+      try {
+        // Obtener datos completos del usuario y la orden para los templates
+        const [user, order] = await Promise.all([
+          prisma.user.findUnique({
+            where: { id: userId },
+            select: { email: true, nombre: true },
+          }),
+          prisma.order.findUnique({
+            where: { id: result.orderId },
+            select: {
+              total: true,
+              shippingCost: true,
+              taxAmount: true,
+              shippingAddress: true,
+              items: {
+                select: {
+                  cantidad: true,
+                  precioUnitario: true,
+                  product: { select: { nombre: true } },
+                },
+              },
+            },
+          }),
+        ]);
+
+        if (!user || !order) return;
+
+        // Parsear la dirección de envío guardada como JSON
+        let shippingAddress: Record<string, string> = {};
+        try {
+          shippingAddress = JSON.parse(order.shippingAddress ?? '{}') as Record<string, string>;
+        } catch { /* dirección no parseável — continuar sin ella */ }
+
+        const emailItems = order.items.map((i) => ({
+          nombre: i.product.nombre,
+          cantidad: i.cantidad,
+          precioUnitario: parseFloat(i.precioUnitario.toString()),
+        }));
+
+        const total = parseFloat(order.total.toString());
+        const shippingCost = parseFloat(order.shippingCost.toString());
+        const taxAmount = parseFloat(order.taxAmount.toString());
+        const subtotal = emailItems.reduce(
+          (sum, i) => sum + i.precioUnitario * i.cantidad,
+          0,
+        );
+
+        // Confirmación al cliente + notificación al admin (en paralelo)
+        await Promise.all([
+          sendOrderConfirmationEmail({
+            to: user.email,
+            customerName: user.nombre ?? null,
+            orderId: result.orderId,
+            items: emailItems,
+            subtotal,
+            shippingCost,
+            taxAmount,
+            total,
+            shippingAddress,
+          }),
+          sendNewOrderAdminEmail({
+            orderId: result.orderId,
+            customerEmail: user.email,
+            customerName: user.nombre ?? null,
+            total,
+            items: emailItems,
+          }),
+        ]);
+
+        // ── Alerta de stock bajo ──────────────────────────────────────────────
+        // Solo notificar cuando el stock CRUZA el umbral hacia abajo en esta
+        // venta, no en cada compra si ya estaba bajo desde antes.
+        const productIds = items.map((i) => i.productId);
+        const products = await prisma.product.findMany({
+          where: { id: { in: productIds } },
+          select: { id: true, nombre: true, stock: true },
+        });
+
+        for (const item of items) {
+          const product = products.find((p) => p.id === item.productId);
+          if (!product) continue;
+          const stockAfter = product.stock;                    // ya decrementado en la transacción
+          const stockBefore = stockAfter + item.cantidad;     // stock antes de esta venta
+          if (stockAfter < LOW_STOCK_THRESHOLD && stockBefore >= LOW_STOCK_THRESHOLD) {
+            await sendLowStockAdminEmail({
+              productId: product.id,
+              nombre: product.nombre,
+              stock: stockAfter,
+            });
+          }
+        }
+      } catch (emailErr) {
+        console.error('[create-order] Error en emails post-compra:', emailErr);
+      }
+    })();
   } else if (result.orderId !== null) {
     console.log(
       `[create-order] Order ${result.orderId} ya existía para pi: ${pi.id} — sin duplicado`

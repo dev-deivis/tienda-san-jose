@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createHmac, timingSafeEqual } from 'crypto';
+import { sendOrderDeliveredEmail } from '@/lib/email';
 
 // ─── Verificación de firma ────────────────────────────────────────────────────
 //
@@ -134,7 +135,11 @@ export async function POST(req: NextRequest) {
   // ── Buscar la orden por trackingNumber ────────────────────────────────────
   const order = await prisma.order.findFirst({
     where: { trackingNumber },
-    select: { id: true, status: true },
+    select: {
+      id: true,
+      status: true,
+      userId: true,
+    },
   });
 
   if (!order) {
@@ -170,6 +175,25 @@ export async function POST(req: NextRequest) {
     `[shippo-webhook] ✓ Orden #${order.id} marcada como "delivered" ` +
     `(tracking: ${trackingNumber})`,
   );
+
+  // Notificar al cliente que su pedido fue entregado (fire-and-forget)
+  void (async () => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: order.userId },
+        select: { email: true, nombre: true },
+      });
+      if (user) {
+        await sendOrderDeliveredEmail({
+          to: user.email,
+          customerName: user.nombre ?? null,
+          orderId: order.id,
+        });
+      }
+    } catch (emailErr) {
+      console.error('[shippo-webhook] Error al enviar email de entrega:', emailErr);
+    }
+  })();
 
   return NextResponse.json({ ok: true, orderId: order.id });
 }
