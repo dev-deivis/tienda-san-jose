@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { connection } from 'next/server';
 import { getDictionary, isValidLocale } from '@/app/[locale]/dictionaries';
 import { LoginClient } from './login-client';
 import { SITE_URL } from '@/i18n/routing';
@@ -32,6 +33,10 @@ export default async function LoginPage({
 }: {
   params: Promise<{ locale: string }>;
 }) {
+  // Forzar rendering dinámico para evitar que el CDN cachee el RSC payload
+  // de esta página y lo sirva en lugar del HTML en full-page navigations.
+  await connection();
+
   const { locale } = await params;
   if (!isValidLocale(locale)) notFound();
 
