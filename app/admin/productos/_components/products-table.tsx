@@ -21,7 +21,7 @@ type Product = {
   category: Category;
   images: ProductImageItem[];
   attributes: unknown;
-  _count: { orderItems: number };
+  vendidos: number;
 };
 
 type Props = {
@@ -142,7 +142,7 @@ export default function ProductsTable({ products, categories }: Props) {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-sm text-gray-600">{product._count.orderItems}</span>
+                    <span className="text-sm text-gray-600">{product.vendidos}</span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">

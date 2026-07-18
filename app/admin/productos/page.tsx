@@ -10,7 +10,8 @@ export default async function AdminProductosPage() {
     include: {
       category: { select: { id: true, nombre: true, slug: true } },
       images: { orderBy: { orden: 'asc' }, select: { id: true, url: true, orden: true } },
-      _count: { select: { orderItems: true } },
+      // Traer solo la cantidad de cada OrderItem para sumarla en JS
+      orderItems: { select: { cantidad: true } },
     },
     orderBy: { createdAt: 'desc' },
   });
@@ -27,6 +28,9 @@ export default async function AdminProductosPage() {
     imagen: p.imagen ?? null,
     attributes: p.attributes,
     images: p.images,
+    // Suma real de piezas vendidas (no cuenta de órdenes)
+    vendidos: p.orderItems.reduce((sum, oi) => sum + oi.cantidad, 0),
+    orderItems: undefined, // no serializar el array crudo al cliente
   }));
 
   return (
