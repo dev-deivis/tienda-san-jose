@@ -134,7 +134,7 @@ export default async function HomePage({
 
   return (
     <>
-      <ArcGalleryHero images={heroImages} dict={dict.hero} logoAlt={dict.nav.logoAlt} />
+      <ArcGalleryHero images={heroImages} dict={dict.hero} logoAlt={dict.nav.logoAlt} locale={locale} />
       <TrustBadges dict={dict.trust} />
       <ColeccionesSagradas categories={categories} dict={dict.collections} />
     </>

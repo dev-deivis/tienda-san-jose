@@ -9,6 +9,7 @@ type ArcGalleryHeroProps = {
   images: string[];
   dict: Dictionary['hero'];
   logoAlt: string;
+  locale: string;
   startAngle?: number;
   endAngle?: number;
   radiusLg?: number;
@@ -24,6 +25,7 @@ export const ArcGalleryHero: React.FC<ArcGalleryHeroProps> = ({
   images,
   dict,
   logoAlt,
+  locale,
   startAngle = 20,
   endAngle = 160,
   radiusLg = 480,
@@ -131,13 +133,13 @@ export const ArcGalleryHero: React.FC<ArcGalleryHeroProps> = ({
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/categoria/articulos-religiosos"
+              href={`/${locale}/categoria/articulos-religiosos`}
               className="w-full sm:w-auto px-7 py-3 rounded-full bg-brand-purple text-white hover:bg-brand-purple-dark transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-medium"
             >
               {dict.exploreCta}
             </Link>
             <Link
-              href="/nosotros"
+              href={`/${locale}/nosotros`}
               className="w-full sm:w-auto px-7 py-3 rounded-full border-2 border-brand-gold text-brand-purple hover:bg-brand-gold/10 transition-all duration-200 font-medium"
             >
               {dict.historyCta}
