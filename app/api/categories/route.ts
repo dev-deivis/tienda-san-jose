@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { getSessionUser } from '@/lib/auth';
 
@@ -36,6 +37,8 @@ export async function POST(req: NextRequest) {
         imagen: body.imagen?.trim() || null,
       },
     });
+    revalidatePath('/es');
+    revalidatePath('/en');
     return NextResponse.json(category, { status: 201 });
   } catch (err: unknown) {
     if (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'P2002') {

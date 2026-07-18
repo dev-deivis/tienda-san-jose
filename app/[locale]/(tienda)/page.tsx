@@ -7,6 +7,10 @@ import { TrustBadges } from '@/components/sections/trust-badges';
 import { ColeccionesSagradas } from '@/components/sections/colecciones-sagradas';
 import { SITE_URL } from '@/i18n/routing';
 
+// ISR: revalida el home cada 60 segundos como máximo.
+// La revalidación bajo demanda (revalidatePath en /api/categories) lo invalida inmediatamente.
+export const revalidate = 60;
+
 export async function generateMetadata({
   params,
 }: {

@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { getSessionUser } from '@/lib/auth';
+
+// Invalida el caché del home y del listado de categorías en ambos locales.
+function revalidateHomePage() {
+  revalidatePath('/es');
+  revalidatePath('/en');
+}
 
 export async function GET(
   _req: NextRequest,
@@ -56,6 +63,7 @@ export async function PATCH(
         ...(body.imagen !== undefined && { imagen: body.imagen?.trim() || null }),
       },
     });
+    revalidateHomePage();
     return NextResponse.json(category);
   } catch (err: unknown) {
     if (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'P2002') {
@@ -94,6 +102,7 @@ export async function DELETE(
 
   try {
     await prisma.category.delete({ where: { id: categoryId } });
+    revalidateHomePage();
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
     if (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'P2025') {
