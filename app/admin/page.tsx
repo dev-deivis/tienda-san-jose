@@ -17,9 +17,9 @@ export default async function AdminDashboardPage() {
   });
   const ventasMesValor = parseFloat((ventasMes._sum.total ?? 0).toString());
 
-  // KPI 2: Pedidos pendientes
+  // KPI 2: Pedidos en proceso (los que aún no tienen guía generada)
   const pedidosPendientes = await prisma.order.count({
-    where: { status: 'pending' },
+    where: { status: 'processing' },
   });
 
   // KPI 3 + Tabla: Top 5 productos más vendidos del mes
@@ -100,16 +100,16 @@ export default async function AdminDashboardPage() {
           <p className="text-xs text-gray-400 mt-1">Órdenes no canceladas</p>
         </div>
 
-        {/* Pedidos pendientes */}
+        {/* Pedidos por enviar */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-gray-500">Pedidos pendientes</span>
+            <span className="text-sm font-medium text-gray-500">Por enviar</span>
             <div className="w-9 h-9 rounded-full bg-amber-50 flex items-center justify-center">
               <ShoppingCart size={16} className="text-amber-600" />
             </div>
           </div>
           <p className="text-2xl font-bold text-gray-900">{pedidosPendientes}</p>
-          <p className="text-xs text-gray-400 mt-1">Esperando procesamiento</p>
+          <p className="text-xs text-gray-400 mt-1">En proceso sin guía generada</p>
         </div>
 
         {/* Producto más vendido */}

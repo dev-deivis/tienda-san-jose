@@ -43,15 +43,15 @@ export default async function StaffHomePage() {
       <section className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="flex items-center gap-2 px-6 py-4 border-b border-gray-100">
           <ShoppingCart size={18} className="text-brand-purple" />
-          <h3 className="font-semibold text-gray-800">Pedidos pendientes recientes</h3>
+          <h3 className="font-semibold text-gray-800">Pedidos por enviar</h3>
           <span className="ml-auto text-xs text-gray-400">
-            Mostrando hasta 5 pedidos pendientes o en proceso
+            Mostrando hasta 5 pedidos en proceso
           </span>
         </div>
 
         {pedidosSerialized.length === 0 ? (
           <div className="px-6 py-10 text-center text-gray-400 text-sm">
-            No hay pedidos pendientes en este momento.
+            No hay pedidos en proceso en este momento.
           </div>
         ) : (
           <div className="overflow-x-auto">
