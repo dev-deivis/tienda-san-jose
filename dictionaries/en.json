@@ -150,7 +150,10 @@
     "errorDesc": "Payment could not be completed. You can return to checkout and try again.",
     "backToCheckout": "Back to checkout",
     "stockTitle": "Insufficient stock in your cart",
-    "stockItemLine": "{nombre}: only {disponible} available, you requested {solicitado}"
+    "stockItemLine": "{nombre}: only {disponible} available, you requested {solicitado}",
+    "savedAddresses": "Saved address",
+    "useNewAddress": "+ Use a new address",
+    "addressDefault": "(default)"
   },
   "shipping": {
     "formTitle": "Shipping information",

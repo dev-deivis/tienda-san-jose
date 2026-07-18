@@ -150,7 +150,10 @@
     "errorDesc": "El pago no pudo completarse. Puedes volver al checkout e intentarlo de nuevo.",
     "backToCheckout": "Volver al checkout",
     "stockTitle": "Stock insuficiente en tu carrito",
-    "stockItemLine": "{nombre}: solo {disponible} disponible(s), pediste {solicitado}"
+    "stockItemLine": "{nombre}: solo {disponible} disponible(s), pediste {solicitado}",
+    "savedAddresses": "Dirección guardada",
+    "useNewAddress": "+ Usar una dirección nueva",
+    "addressDefault": "(predeterminada)"
   },
   "shipping": {
     "formTitle": "Información de envío",

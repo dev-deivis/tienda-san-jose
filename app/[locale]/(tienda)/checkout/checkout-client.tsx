@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/context/cart-context';
+import { useAuth } from '@/context/auth-context';
 import {
   ShippingForm,
   type ShippingFormData,
@@ -11,6 +12,22 @@ import {
 } from '@/components/checkout/shipping-form';
 import { PaymentSection, type StockErrorItem } from '@/components/checkout/payment-section';
 import type { Dictionary } from '@/app/[locale]/dictionaries';
+
+// Sentinel para la opción "nueva dirección"
+const NEW_ADDRESS = '__new__';
+
+type SavedAddress = {
+  id: number;
+  nombre: string;
+  apellido: string;
+  telefono: string;
+  direccion1: string;
+  direccion2: string | null;
+  ciudad: string;
+  estado: string;
+  codigoPostal: string;
+  isDefault: boolean;
+};
 
 const INITIAL_FORM: ShippingFormData = {
   nombre: '',
@@ -53,10 +70,15 @@ type Props = {
 export function CheckoutClient({ checkoutDict, shippingDict, paymentDict }: Props) {
   const router = useRouter();
   const { items, getTotal } = useCart();
+  const { user } = useAuth();
 
   const [hydrated, setHydrated] = useState(false);
   const [formData, setFormData] = useState<ShippingFormData>(INITIAL_FORM);
   const [errors, setErrors] = useState<ShippingFormErrors>({});
+
+  // Estado de la libreta de direcciones
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
 
   // Estado para tarifas de envío
   const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
@@ -78,6 +100,85 @@ export function CheckoutClient({ checkoutDict, shippingDict, paymentDict }: Prop
       router.replace('/carrito');
     }
   }, [hydrated, items.length, router]);
+
+  // Cargar direcciones guardadas para clientes autenticados
+  useEffect(() => {
+    if (!user || user.role !== 'CUSTOMER') return;
+
+    fetch('/api/account/addresses')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: SavedAddress[]) => {
+        if (!Array.isArray(data) || data.length === 0) return;
+        setSavedAddresses(data);
+
+        // Pre-seleccionar la predeterminada (el API ya las ordena isDefault desc)
+        const defaultAddr = data.find((a) => a.isDefault) ?? data[0];
+        const id = String(defaultAddr.id);
+        setSelectedAddressId(id);
+        setFormData((prev) => ({
+          ...prev,
+          nombre: defaultAddr.nombre,
+          apellido: defaultAddr.apellido,
+          telefono: defaultAddr.telefono,
+          direccion1: defaultAddr.direccion1,
+          direccion2: defaultAddr.direccion2 ?? '',
+          ciudad: defaultAddr.ciudad,
+          estado: defaultAddr.estado,
+          codigoPostal: defaultAddr.codigoPostal,
+          // Preservar email si ya estaba escrito; completar con el del usuario si estaba vacío
+          email: prev.email || user.email,
+        }));
+      })
+      .catch(() => {
+        // Si falla, el formulario sigue vacío normalmente
+      });
+  }, [user]);
+
+  /** Aplica una dirección guardada al formulario, o limpia los campos de dirección. */
+  function applyAddress(value: string) {
+    setSelectedAddressId(value);
+
+    // Limpiar errores y tarifas al cambiar dirección
+    setErrors({});
+    setShippingFetched(false);
+    setShippingRates([]);
+    setSelectedRate(null);
+    setTaxAmount(0);
+    setTaxReady(false);
+    setStockError(null);
+
+    if (value === NEW_ADDRESS) {
+      // Limpia solo los campos de dirección; preserva email y teléfono si los escribió
+      setFormData((prev) => ({
+        ...prev,
+        nombre: '',
+        apellido: '',
+        telefono: '',
+        direccion1: '',
+        direccion2: '',
+        ciudad: '',
+        estado: '',
+        codigoPostal: '',
+      }));
+      return;
+    }
+
+    const addr = savedAddresses.find((a) => String(a.id) === value);
+    if (!addr) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      nombre: addr.nombre,
+      apellido: addr.apellido,
+      telefono: addr.telefono,
+      direccion1: addr.direccion1,
+      direccion2: addr.direccion2 ?? '',
+      ciudad: addr.ciudad,
+      estado: addr.estado,
+      codigoPostal: addr.codigoPostal,
+      email: prev.email || (user?.email ?? ''),
+    }));
+  }
 
   function handleChange(field: keyof ShippingFormData, value: string) {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -160,6 +261,36 @@ export function CheckoutClient({ checkoutDict, shippingDict, paymentDict }: Prop
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Columna izquierda — formulario */}
           <div className="flex-1 flex flex-col gap-6">
+
+            {/* Selector de direcciones guardadas — solo visible si hay al menos 1 */}
+            {savedAddresses.length > 0 && (
+              <div className="bg-white rounded-2xl p-5 shadow-sm flex flex-col gap-2">
+                <label
+                  htmlFor="address-selector"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  {checkoutDict.savedAddresses}
+                </label>
+                <select
+                  id="address-selector"
+                  value={selectedAddressId}
+                  onChange={(e) => applyAddress(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm
+                             focus:outline-none focus:ring-2 focus:ring-brand-purple/20
+                             focus:border-brand-purple transition-colors bg-white"
+                >
+                  {savedAddresses.map((addr) => (
+                    <option key={addr.id} value={String(addr.id)}>
+                      {addr.nombre} {addr.apellido} — {addr.direccion1}, {addr.ciudad},{' '}
+                      {addr.estado}
+                      {addr.isDefault ? ` ${checkoutDict.addressDefault}` : ''}
+                    </option>
+                  ))}
+                  <option value={NEW_ADDRESS}>{checkoutDict.useNewAddress}</option>
+                </select>
+              </div>
+            )}
+
             <ShippingForm
               values={formData}
               errors={errors}
