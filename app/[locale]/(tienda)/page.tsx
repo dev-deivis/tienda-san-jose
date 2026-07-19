@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { connection } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getDictionary, isValidLocale } from '@/app/[locale]/dictionaries';
 import { notFound } from 'next/navigation';
@@ -6,10 +7,6 @@ import { ArcGalleryHero } from '@/components/ui/arc-gallery-hero';
 import { TrustBadges } from '@/components/sections/trust-badges';
 import { ColeccionesSagradas } from '@/components/sections/colecciones-sagradas';
 import { SITE_URL } from '@/i18n/routing';
-
-// ISR: revalida el home cada 60 segundos como máximo.
-// La revalidación bajo demanda (revalidatePath en /api/categories) lo invalida inmediatamente.
-export const revalidate = 60;
 
 export async function generateMetadata({
   params,
@@ -111,6 +108,13 @@ export default async function HomePage({
 }: {
   params: Promise<{ locale: string }>;
 }) {
+  // Forzar rendering dinámico: el CDN de Hostinger no respeta Vary sobre headers
+  // custom (rsc, next-router-state-tree) y mezcla las variantes HTML y RSC bajo
+  // el mismo cache-key, sirviendo RSC payload como HTML en full-page navigations.
+  // connection() emite Cache-Control: private, no-store → el CDN nunca cachea.
+  // Las queries son rápidas (2 Prisma) y revalidatePath() en /api/categories
+  // sigue invalidando el cache interno del servidor cuando cambian las categorías.
+  await connection();
   const { locale } = await params;
   if (!isValidLocale(locale)) notFound();
 

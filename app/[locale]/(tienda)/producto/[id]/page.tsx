@@ -1,11 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { connection } from 'next/server';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-
-// ISR: revalida cada 60 s. Datos públicos que pueden cambiar (precio, stock, imágenes).
-// No usamos connection() para mantener el beneficio de caché en páginas de producto.
-export const revalidate = 60;
 import { ProductGallery } from '@/components/product/product-gallery';
 import { ProductPurchasePanel } from '@/components/product/product-purchase-panel';
 import { ProductTabs } from '@/components/product/product-tabs';
@@ -69,6 +66,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ProductoPage({ params }: Props) {
+  // Forzar rendering dinámico: mismo motivo que el home — el CDN de Hostinger
+  // mezcla variantes HTML y RSC. Precio y stock siempre frescos como beneficio adicional.
+  await connection();
   const { locale, id } = await params;
 
   if (!isValidLocale(locale)) notFound();
