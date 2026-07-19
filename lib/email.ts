@@ -10,6 +10,7 @@
  */
 
 import nodemailer from 'nodemailer';
+import { prisma } from '@/lib/prisma';
 
 // ── Configuración SMTP ────────────────────────────────────────────────────────
 
@@ -31,6 +32,26 @@ const ADMIN_EMAIL =
 
 /** Umbral de stock bajo: notificar cuando el stock cruza por debajo de este valor. */
 export const LOW_STOCK_THRESHOLD = 5;
+
+/**
+ * Construye la lista de destinatarios para notificaciones internas de admin.
+ * Combina ADMIN_NOTIFICATION_EMAIL con todos los usuarios ADMIN/STAFF en BD.
+ * Si la consulta falla, devuelve solo ADMIN_EMAIL como fallback seguro.
+ */
+async function getAdminRecipients(): Promise<string> {
+  try {
+    const staffUsers = await prisma.user.findMany({
+      where: { role: { in: ['ADMIN', 'STAFF'] } },
+      select: { email: true },
+    });
+    const emails = new Set<string>([ADMIN_EMAIL]);
+    for (const u of staffUsers) emails.add(u.email);
+    return Array.from(emails).join(', ');
+  } catch (err) {
+    console.error('[email] Error al obtener destinatarios admin, usando fallback:', err);
+    return ADMIN_EMAIL;
+  }
+}
 
 // ── Helpers de formateo ───────────────────────────────────────────────────────
 
@@ -540,14 +561,15 @@ export async function sendNewOrderAdminEmail(p: NewOrderAdminParams): Promise<vo
               text-transform:uppercase;letter-spacing:0.6px;">Productos</p>
     ${itemsTable(p.items)}`;
 
+  const recipients = await getAdminRecipients();
   try {
     await transporter.sendMail({
       from: FROM,
-      to: ADMIN_EMAIL,
+      to: recipients,
       subject: `🛍️ Nueva orden #${p.orderId} — ${usd(p.total)}`,
       html: baseTemplate(`Nueva Orden #${p.orderId}`, body),
     });
-    console.log(`[email] Admin notificado de nueva orden #${p.orderId}`);
+    console.log(`[email] Admin notificado de nueva orden #${p.orderId} → ${recipients}`);
   } catch (err) {
     console.error(
       `[email] Error al notificar admin de nueva orden #${p.orderId}:`,
@@ -604,16 +626,17 @@ export async function sendLowStockAdminEmail(p: LowStockAdminParams): Promise<vo
       inventario antes de la próxima venta.
     </p>`;
 
+  const recipients = await getAdminRecipients();
   try {
     await transporter.sendMail({
       from: FROM,
-      to: ADMIN_EMAIL,
+      to: recipients,
       subject: `⚠️ Stock bajo: "${p.nombre}" — ${p.stock} unid. restantes`,
       html: baseTemplate('Alerta de Stock Bajo', body),
     });
     console.log(
       `[email] Alerta de stock bajo enviada — ` +
-      `producto #${p.productId} "${p.nombre}": ${p.stock} unid.`,
+      `producto #${p.productId} "${p.nombre}": ${p.stock} unid. → ${recipients}`,
     );
   } catch (err) {
     console.error(
@@ -734,14 +757,15 @@ export async function sendOrderCancelledAdminEmail(
       </table>
     </div>`;
 
+  const recipients = await getAdminRecipients();
   try {
     await transporter.sendMail({
       from: FROM,
-      to: ADMIN_EMAIL,
+      to: recipients,
       subject: `❌ Pedido #${p.orderId} cancelado — Reembolso ${usd(p.total)}`,
       html: baseTemplate(`Pedido #${p.orderId} Cancelado`, body),
     });
-    console.log(`[email] Admin notificado de cancelación de orden #${p.orderId}`);
+    console.log(`[email] Admin notificado de cancelación de orden #${p.orderId} → ${recipients}`);
   } catch (err) {
     console.error(
       `[email] Error al notificar admin de cancelación #${p.orderId}:`,
