@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { connection } from 'next/server';
 import { getDictionary, isValidLocale } from '@/app/[locale]/dictionaries';
 import { ForgotPasswordClient } from './forgot-password-client';
 import { SITE_URL } from '@/i18n/routing';
@@ -32,6 +33,8 @@ export default async function RecuperarContrasenaPage({
 }: {
   params: Promise<{ locale: string }>;
 }) {
+  // Forzar rendering dinámico para evitar que el CDN cachee el RSC payload.
+  await connection();
   const { locale } = await params;
   if (!isValidLocale(locale)) notFound();
 

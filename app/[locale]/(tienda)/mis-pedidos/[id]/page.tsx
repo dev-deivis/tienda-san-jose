@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import { connection } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getDictionary, isValidLocale } from '@/app/[locale]/dictionaries';
@@ -56,6 +57,8 @@ function parseShippingAddress(raw: string | null): ShippingAddress {
 }
 
 export default async function DetallePedidoPage({ params }: Props) {
+  // Forzar rendering dinámico para evitar que el CDN cachee el RSC payload.
+  await connection();
   const { locale, id } = await params;
   if (!isValidLocale(locale)) notFound();
 

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import { connection } from 'next/server';
 import { Package } from 'lucide-react';
 import { getSessionUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
@@ -44,6 +45,8 @@ export default async function MisPedidosPage({
 }: {
   params: Promise<{ locale: string }>;
 }) {
+  // Forzar rendering dinámico para evitar que el CDN cachee el RSC payload.
+  await connection();
   const { locale } = await params;
   if (!isValidLocale(locale)) notFound();
 

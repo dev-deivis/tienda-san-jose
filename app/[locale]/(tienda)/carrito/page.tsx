@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { connection } from 'next/server';
 import { getDictionary, isValidLocale } from '@/app/[locale]/dictionaries';
 import { CarritoClient } from './carrito-client';
 
@@ -23,6 +24,8 @@ export default async function CarritoPage({
 }: {
   params: Promise<{ locale: string }>;
 }) {
+  // Forzar rendering dinámico para evitar que el CDN cachee el RSC payload.
+  await connection();
   const { locale } = await params;
   if (!isValidLocale(locale)) notFound();
 

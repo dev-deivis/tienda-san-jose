@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
+import { connection } from 'next/server';
 import Link from 'next/link';
 import { User, MapPin, KeyRound, Package, ChevronRight } from 'lucide-react';
 import { getSessionUser } from '@/lib/auth';
@@ -25,6 +26,8 @@ export default async function MiCuentaPage({
 }: {
   params: Promise<{ locale: string }>;
 }) {
+  // Forzar rendering dinámico para evitar que el CDN cachee el RSC payload.
+  await connection();
   const { locale } = await params;
   if (!isValidLocale(locale)) notFound();
 

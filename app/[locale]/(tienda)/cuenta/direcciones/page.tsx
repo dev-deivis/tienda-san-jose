@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
+import { connection } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
 import { getDictionary, isValidLocale } from '@/app/[locale]/dictionaries';
 import { AddressesClient } from './addresses-client';
@@ -23,6 +24,8 @@ export default async function DireccionesPage({
 }: {
   params: Promise<{ locale: string }>;
 }) {
+  // Forzar rendering dinámico para evitar que el CDN cachee el RSC payload.
+  await connection();
   const { locale } = await params;
   if (!isValidLocale(locale)) notFound();
 

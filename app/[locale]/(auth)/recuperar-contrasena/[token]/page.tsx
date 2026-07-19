@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { connection } from 'next/server';
 import Link from 'next/link';
 import { getDictionary, isValidLocale } from '@/app/[locale]/dictionaries';
 import { prisma } from '@/lib/prisma';
@@ -35,6 +36,8 @@ export default async function ResetPasswordPage({
 }: {
   params: Promise<{ locale: string; token: string }>;
 }) {
+  // Forzar rendering dinámico: este token es time-sensitive y nunca debe cachearse.
+  await connection();
   const { locale, token } = await params;
   if (!isValidLocale(locale)) notFound();
 

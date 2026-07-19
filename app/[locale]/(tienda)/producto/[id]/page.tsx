@@ -2,6 +2,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
+
+// ISR: revalida cada 60 s. Datos públicos que pueden cambiar (precio, stock, imágenes).
+// No usamos connection() para mantener el beneficio de caché en páginas de producto.
+export const revalidate = 60;
 import { ProductGallery } from '@/components/product/product-gallery';
 import { ProductPurchasePanel } from '@/components/product/product-purchase-panel';
 import { ProductTabs } from '@/components/product/product-tabs';
