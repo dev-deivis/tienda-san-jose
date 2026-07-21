@@ -1,22 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Shippo } from 'shippo';
 import { sendOrderShippedEmail } from '@/lib/email';
 import { WeightUnitEnum } from 'shippo/models/components/weightunitenum.js';
 import { DistanceUnitEnum } from 'shippo/models/components/distanceunitenum.js';
 import { LabelFileTypeEnum } from 'shippo/models/components/labelfiletypeenum.js';
 import { getSessionUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-
-const ADDRESS_FROM = {
-  name: 'Tienda San José',
-  street1: '26455 Old 41 Rd. Ste. #16',
-  city: 'Bonita Springs',
-  state: 'FL',
-  zip: '34135',
-  country: 'US',
-  phone: '+12392214020',
-  email: 'info@tiendasanjose.com',
-};
+import { shippo, ADDRESS_FROM } from '@/lib/shippo';
 
 /** Umbral máximo de diferencia de precio aceptable para auto-seleccionar un rate (30%) */
 const MAX_PRICE_DIFF_RATIO = 0.30;
@@ -87,10 +76,6 @@ export async function POST(
         { status: 400 }
       );
     }
-
-    const shippo = new Shippo({
-      apiKeyHeader: process.env.SHIPPO_API_TOKEN!,
-    });
 
     type ShippoTransaction = Awaited<ReturnType<typeof shippo.transactions.create>>;
     let transaction: ShippoTransaction | null = null;
