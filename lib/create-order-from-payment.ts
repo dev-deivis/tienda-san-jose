@@ -73,19 +73,6 @@ export async function createOrderFromPaymentIntent(
     ? (JSON.parse(customerAddressRaw) as Record<string, unknown>)
     : {};
 
-  // Registrar Tax Transaction en Stripe (para reportes de impuestos)
-  if (taxCalculationId) {
-    try {
-      await stripe.tax.transactions.createFromCalculation({
-        calculation: taxCalculationId,
-        reference: pi.id,
-      });
-    } catch (err) {
-      console.error('[create-order] Error creando Tax Transaction:', err);
-      // No bloquear — el Order se crea igual
-    }
-  }
-
   // ─── Transacción principal ────────────────────────────────────────────────
   // Dentro de esta transacción ocurren en orden:
   //   1. Verificar idempotencia (evitar orden duplicada)
@@ -208,6 +195,21 @@ export async function createOrderFromPaymentIntent(
     console.log(
       `[create-order] Order ${result.orderId} creado para usuario ${userId} (pi: ${pi.id})`
     );
+
+    // ── Registrar Tax Transaction en Stripe (para reportes de impuestos) ─────
+    // Se hace DESPUÉS de confirmar que la orden existe en BD, para evitar
+    // registros de impuestos huérfanos si el stock falló y se hizo rollback.
+    if (taxCalculationId) {
+      try {
+        await stripe.tax.transactions.createFromCalculation({
+          calculation: taxCalculationId,
+          reference: pi.id,
+        });
+      } catch (err) {
+        console.error('[create-order] Error creando Tax Transaction:', err);
+        // No bloquear — la orden ya fue creada y el pago confirmado
+      }
+    }
 
     // ── Emails post-compra (fire-and-forget) ─────────────────────────────────
     // Los errores se manejan dentro de cada función de email — nunca bloquean
