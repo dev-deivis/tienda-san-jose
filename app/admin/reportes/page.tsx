@@ -43,7 +43,8 @@ function toInputDate(date: Date): string {
 }
 
 function downloadCSV(data: string, filename: string) {
-  const blob = new Blob([data], { type: 'text/csv;charset=utf-8;' });
+  // \uFEFF = BOM UTF-8 — necesario para que Excel detecte la codificación correctamente
+  const blob = new Blob(['\uFEFF' + data], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

@@ -44,6 +44,24 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  // ── Home redirect: ADMIN → /admin, STAFF → /staff ────────────────────────
+  // Solo aplica en "/" o "/{locale}" exacto (sin path adicional).
+  // Se omite si la request trae ?ver_tienda=1 (botón "Ver tienda" desde los shells).
+  const segments = pathname.split('/').filter(Boolean);
+  const isHomePath =
+    segments.length === 0 ||
+    (segments.length === 1 && isValidLocale(segments[0]));
+  const isBypassViewStore = request.nextUrl.searchParams.get('ver_tienda') === '1';
+
+  if (!isBypassViewStore && isHomePath && payload) {
+    if (payload.role === 'ADMIN') {
+      return NextResponse.redirect(new URL('/admin', request.url));
+    }
+    if (payload.role === 'STAFF') {
+      return NextResponse.redirect(new URL('/staff', request.url));
+    }
+  }
+
   // ── i18n: detección de locale ─────────────────────────────────────────────
   // Admin y staff tienen sus propios root layouts — no necesitan prefijo de locale
   if (!pathname.startsWith('/admin') && !pathname.startsWith('/staff')) {

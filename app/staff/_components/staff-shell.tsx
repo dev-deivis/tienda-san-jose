@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingCart, Package, LogOut, Store, UserCircle, Menu, X } from 'lucide-react';
+import { ShoppingCart, Package, LogOut, Store, UserCircle, Menu, X, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
 
 const navLinks = [
@@ -104,6 +104,16 @@ export default function StaffShell({ children }: { children: React.ReactNode }) 
 
         {/* Footer del sidebar */}
         <div className="px-3 py-4 border-t border-white/10 space-y-1">
+          {/* Ver tienda — abre en pestaña nueva sin disparar el redirect de home */}
+          <a
+            href="/es?ver_tienda=1"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium hover:bg-white/10 transition-colors"
+          >
+            <ExternalLink size={18} />
+            Ver tienda
+          </a>
           <Link
             href="/staff/cuenta"
             onClick={close}
